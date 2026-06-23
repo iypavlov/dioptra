@@ -1,0 +1,22 @@
+# OCR
+paddleocr>=2.8.0
+paddlepaddle>=2.6.0
+
+# Screen capture
+mss>=9.0.0
+pyautogui>=0.9.54
+
+# GUI
+PyQt6>=6.7.0
+
+# System tray
+pystray>=0.19.0
+
+# Hotkey
+keyboard>=0.13.5
+
+# Translation
+deep-translator>=1.11.4
+
+# Utilities
+Pillow>=10.0.0
