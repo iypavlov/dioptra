@@ -9,9 +9,9 @@ os.environ["QT_LOGGING_RULES"] = "qt.qpa.window=false"
 
 import mouse
 import keyboard
-from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu
+from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QWidget
 from PyQt6.QtGui import QIcon, QAction
-from PyQt6.QtCore import QObject, pyqtSignal, QThread
+from PyQt6.QtCore import QObject, pyqtSignal, QThread, Qt
 
 from ocr_service import OcrService
 from translation.base import TranslatorFactory
@@ -79,6 +79,7 @@ class ScreenTranslatorApp:
         self._mouse_hook = None
         self._request_seq = 0
         self._modifier_hooks = []
+        self._crosshair = None
         self._setup_modifier_hooks()
 
         self._settings_window = None
@@ -100,12 +101,35 @@ class ScreenTranslatorApp:
     def _on_modifier_changed(self, modifier: str):
         self._setup_modifier_hooks()
 
+    def _show_crosshair(self):
+        if self._crosshair is None:
+            self._crosshair = QWidget()
+            self._crosshair.setWindowFlags(
+                Qt.WindowType.FramelessWindowHint
+                | Qt.WindowType.WindowStaysOnTopHint
+                | Qt.WindowType.Tool
+            )
+            self._crosshair.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+            self._crosshair.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+            self._crosshair.setCursor(Qt.CursorShape.CrossCursor)
+            screen = QApplication.primaryScreen()
+            if screen:
+                self._crosshair.setGeometry(screen.geometry())
+        self._crosshair.showFullScreen()
+        self._crosshair.raise_()
+
+    def _hide_crosshair(self):
+        if self._crosshair is not None:
+            self._crosshair.hide()
+
     def _on_modifier_down(self, event):
         self._modifier_pressed = True
         self._mouse_hook = mouse.hook(self._on_mouse_event)
+        self._show_crosshair()
 
     def _on_modifier_up(self, event):
         self._modifier_pressed = False
+        self._hide_crosshair()
         if self._region_selector.is_selecting:
             x, y = mouse.get_position()
             self._on_region_end(x, y)
