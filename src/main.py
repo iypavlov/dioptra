@@ -98,7 +98,6 @@ class ScreenTranslatorApp:
         self._modifier_hooks.append(h2)
 
     def _on_modifier_changed(self, modifier: str):
-        self._modifier = modifier
         self._setup_modifier_hooks()
 
     def _on_modifier_down(self, event):
