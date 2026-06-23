@@ -51,6 +51,7 @@ class ModalOverlay(QWidget):
         self._loading_timer.timeout.connect(self._on_loading_timeout)
         self._loading_dots = 0
         self._loading_active = False
+        self._fade_anim = None
         self._setup_ui()
 
     def _setup_ui(self):
@@ -184,14 +185,16 @@ class ModalOverlay(QWidget):
         self._loading_timer.stop()
 
     def _animate_opacity(self, target: float, duration: int, on_finish=None):
-        anim = QPropertyAnimation(self, b"windowOpacity")
-        anim.setDuration(duration)
-        anim.setStartValue(self.windowOpacity())
-        anim.setEndValue(target)
+        if self._fade_anim:
+            self._fade_anim.stop()
+        self._fade_anim = QPropertyAnimation(self, b"windowOpacity")
+        self._fade_anim.setDuration(duration)
+        self._fade_anim.setStartValue(self.windowOpacity())
+        self._fade_anim.setEndValue(target)
         if on_finish:
-            anim.finished.connect(on_finish)
-        anim.start()
-        return anim
+            self._fade_anim.finished.connect(on_finish)
+        self._fade_anim.start()
+        return self._fade_anim
 
     def _on_loading_timeout(self):
         if not self._loading_active:
@@ -223,16 +226,18 @@ class ModalOverlay(QWidget):
                 (cursor_x - w // 2, cursor_y - h - GAP),
             ]
             best = None
+            clamped = []
             for cx, cy in candidates:
                 if (sg.left() + MARGIN <= cx <= sg.right() - w - MARGIN and
                     sg.top() + MARGIN <= cy <= sg.bottom() - h - MARGIN):
                     best = (cx, cy)
                     break
-                if best is None:
-                    best = (
-                        max(sg.left() + MARGIN, min(cx, sg.right() - w - MARGIN)),
-                        max(sg.top() + MARGIN, min(cy, sg.bottom() - h - MARGIN)),
-                    )
+                clamped.append((
+                    max(sg.left() + MARGIN, min(cx, sg.right() - w - MARGIN)),
+                    max(sg.top() + MARGIN, min(cy, sg.bottom() - h - MARGIN)),
+                ))
+            if best is None and clamped:
+                best = min(clamped, key=lambda p: abs(p[0] - cursor_x) + abs(p[1] - cursor_y))
             if best:
                 x, y = best
         else:
