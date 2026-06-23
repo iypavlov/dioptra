@@ -109,7 +109,6 @@ class ScreenTranslatorApp:
             self._crosshair.setWindowFlags(
                 Qt.WindowType.FramelessWindowHint
                 | Qt.WindowType.WindowStaysOnTopHint
-                | Qt.WindowType.Tool
             )
             self._crosshair.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
             self._crosshair.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
@@ -158,6 +157,7 @@ class ScreenTranslatorApp:
             self._signal_bridge.region_move.emit(event.x, event.y)
 
     def _on_region_start(self, x: int, y: int):
+        self._hide_crosshair()
         self._region_selector.start_selection(x, y)
         self._request_seq += 1
         self._worker.cancel()
