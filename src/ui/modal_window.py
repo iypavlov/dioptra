@@ -1,6 +1,6 @@
 import mouse
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
-from PyQt6.QtCore import Qt, QObject, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt, QObject, pyqtSignal, QTimer, QPropertyAnimation
 from PyQt6.QtGui import QFont
 
 
@@ -183,6 +183,16 @@ class ModalOverlay(QWidget):
         self._loading_active = False
         self._loading_timer.stop()
 
+    def _animate_opacity(self, target: float, duration: int, on_finish=None):
+        anim = QPropertyAnimation(self, b"windowOpacity")
+        anim.setDuration(duration)
+        anim.setStartValue(self.windowOpacity())
+        anim.setEndValue(target)
+        if on_finish:
+            anim.finished.connect(on_finish)
+        anim.start()
+        return anim
+
     def _on_loading_timeout(self):
         if not self._loading_active:
             return
@@ -230,8 +240,10 @@ class ModalOverlay(QWidget):
             y = cursor_y - h // 2
 
         self.move(x, y)
+        self.setWindowOpacity(0.0)
         self.show()
         self.raise_()
+        self._animate_opacity(1.0, 150)
         self._start_mouse_hook()
 
     def _start_mouse_hook(self):
@@ -256,7 +268,7 @@ class ModalOverlay(QWidget):
 
     def _fade_out(self):
         self._stop_mouse_hook()
-        self.hide()
+        self._animate_opacity(0.0, 100, self.hide)
 
     def hideEvent(self, event):
         self._stop_loading_animation()
