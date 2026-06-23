@@ -43,6 +43,7 @@ class ScreenTranslatorApp:
         self._settings.language_changed.connect(self._on_language_changed)
         self._settings.translator_changed.connect(self._on_translator_changed)
         self._settings.ollama_settings_changed.connect(self._on_ollama_settings_changed)
+        self._settings.modifier_changed.connect(self._on_modifier_changed)
 
         self._signal_bridge = SignalBridge()
         self._signal_bridge.region_start.connect(self._on_region_start)
@@ -77,15 +78,28 @@ class ScreenTranslatorApp:
         self._modifier_pressed = False
         self._mouse_hook = None
         self._request_seq = 0
+        self._modifier_hooks = []
         self._setup_modifier_hooks()
 
         self._settings_window = None
         self._setup_tray()
 
     def _setup_modifier_hooks(self):
+        for hook in self._modifier_hooks:
+            try:
+                keyboard.unhook(hook)
+            except Exception:
+                pass
+        self._modifier_hooks = []
         self._modifier = self._settings.selection_modifier
-        keyboard.on_press_key(self._modifier, self._on_modifier_down, suppress=False)
-        keyboard.on_release_key(self._modifier, self._on_modifier_up, suppress=False)
+        h1 = keyboard.on_press_key(self._modifier, self._on_modifier_down, suppress=False)
+        self._modifier_hooks.append(h1)
+        h2 = keyboard.on_release_key(self._modifier, self._on_modifier_up, suppress=False)
+        self._modifier_hooks.append(h2)
+
+    def _on_modifier_changed(self, modifier: str):
+        self._modifier = modifier
+        self._setup_modifier_hooks()
 
     def _on_modifier_down(self, event):
         self._modifier_pressed = True
