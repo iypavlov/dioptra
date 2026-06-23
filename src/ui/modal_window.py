@@ -214,18 +214,17 @@ class ModalOverlay(QWidget):
             ]
             best = None
             for cx, cy in candidates:
-                cx = max(sg.left() + MARGIN, min(cx, sg.right() - w - MARGIN))
-                cy = max(sg.top() + MARGIN, min(cy, sg.bottom() - h - MARGIN))
-                if cx >= sg.left() and cx + w <= sg.right() and cy >= sg.top() and cy + h <= sg.bottom():
+                if (sg.left() + MARGIN <= cx <= sg.right() - w - MARGIN and
+                    sg.top() + MARGIN <= cy <= sg.bottom() - h - MARGIN):
                     best = (cx, cy)
                     break
                 if best is None:
-                    best = (cx, cy)
+                    best = (
+                        max(sg.left() + MARGIN, min(cx, sg.right() - w - MARGIN)),
+                        max(sg.top() + MARGIN, min(cy, sg.bottom() - h - MARGIN)),
+                    )
             if best:
                 x, y = best
-            else:
-                x = max(sg.left() + MARGIN, min(cursor_x + GAP, sg.right() - w - MARGIN))
-                y = max(sg.top() + MARGIN, min(cursor_y - h // 2, sg.bottom() - h - MARGIN))
         else:
             x = cursor_x + GAP
             y = cursor_y - h // 2
