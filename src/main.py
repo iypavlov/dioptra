@@ -54,6 +54,8 @@ class ScreenTranslatorApp:
         TranslatorFactory.register("ollama", OllamaTranslateTranslator)
         self._translator = self._create_translator()
         self._ocr_service = OcrService()
+        import threading
+        threading.Thread(target=self._ocr_service._ensure_ocr, daemon=True).start()
         self._cache = TranslationCache()
         self._modal = ModalOverlay()
         provider_name = {"ollama": "Ollama", "google": "Google Translate"}.get(
