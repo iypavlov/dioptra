@@ -10,7 +10,6 @@ class OcrService:
 
     def _ensure_ocr(self):
         if self._ocr is None:
-            from paddleocr import PaddleOCR
             self._ocr = PaddleOCR(use_angle_cls=False, lang=self._lang, show_log=False)
         return self._ocr
 
