@@ -4,13 +4,13 @@ from paddleocr import PaddleOCR
 
 
 class OcrService:
-    def __init__(self, lang: str = "en"):
+    def __init__(self, lang: str = "en") -> None:
         self._lang = lang
-        self._ocr = None
+        self._ocr: PaddleOCR | None = None
 
-    def _ensure_ocr(self):
+    def _ensure_ocr(self) -> PaddleOCR:
         if self._ocr is None:
-            self._ocr = PaddleOCR(use_angle_cls=False, lang=self._lang, show_log=False)
+            self._ocr = PaddleOCR(use_angle_cls=False, lang=self._lang)
         return self._ocr
 
     def recognize(self, image: Image.Image) -> list[dict]:

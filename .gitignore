@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+*.spec
+
+# pytest
+.pytest_cache/
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+.superpowers/
+.agents/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Project
+*.bat
+*.log
+
+# App data
+.screen-translator/
+docs/

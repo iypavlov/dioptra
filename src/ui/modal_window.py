@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import mouse
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
 from PyQt6.QtCore import Qt, QObject, pyqtSignal, QTimer, QPropertyAnimation
@@ -72,8 +73,8 @@ class ModalOverlay(QWidget):
         self._bg.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self._bg.setStyleSheet("""
             #modalBg {
-                background: #1a1b23;
-                border: 1px solid #2e3140;
+                background: rgba(26, 27, 35, 0.94);
+                border: 1px solid rgba(46, 49, 64, 0.7);
                 border-radius: 12px;
             }
         """)
@@ -134,15 +135,15 @@ class ModalOverlay(QWidget):
         root.addWidget(self._bg)
         self.setLayout(root)
 
-    def clear_content(self):
+    def clear_content(self) -> None:
         self._auto_hide_timer.stop()
         self._source_label.clear()
         self._start_loading_animation()
 
-    def set_provider(self, name: str):
+    def set_provider(self, name: str) -> None:
         self._provider_name = name
 
-    def show_loading(self, cursor_x: int, cursor_y: int):
+    def show_loading(self, cursor_x: int, cursor_y: int) -> None:
         self._auto_hide_timer.stop()
         self._source_label.setText("...")
         self._translation_label.clear()
@@ -150,14 +151,14 @@ class ModalOverlay(QWidget):
         self._provider_label.setText(self._provider_name)
         self._position_and_show(cursor_x, cursor_y)
 
-    def show_ocr_progress(self, word: str, cursor_x: int, cursor_y: int):
+    def show_ocr_progress(self, word: str, cursor_x: int, cursor_y: int) -> None:
         self._auto_hide_timer.stop()
         self._source_label.setText(word)
         self._translation_label.clear()
         self._start_loading_animation()
         self._position_and_show(cursor_x, cursor_y)
 
-    def show_translation(self, word: str, translation: str, cursor_x: int, cursor_y: int):
+    def show_translation(self, word: str, translation: str, cursor_x: int, cursor_y: int) -> None:
         self._stop_loading_animation()
         self._auto_hide_timer.stop()
         self._source_label.setText(word)
@@ -165,7 +166,7 @@ class ModalOverlay(QWidget):
         self._provider_label.setText(self._provider_name)
         self._position_and_show(cursor_x, cursor_y)
 
-    def show_message(self, message: str, cursor_x: int, cursor_y: int):
+    def show_message(self, message: str, cursor_x: int, cursor_y: int) -> None:
         self._stop_loading_animation()
         self._auto_hide_timer.stop()
         self._source_label.setText("")
@@ -174,18 +175,22 @@ class ModalOverlay(QWidget):
         self._position_and_show(cursor_x, cursor_y)
         self._auto_hide_timer.start(2500)
 
-    def _start_loading_animation(self):
+    def _start_loading_animation(self) -> None:
         self._loading_dots = 0
         self._loading_active = True
         self._translation_label.setText("Translating")
         self._loading_timer.start(500)
 
-    def _stop_loading_animation(self):
+    def _stop_loading_animation(self) -> None:
         self._loading_active = False
         self._loading_timer.stop()
 
-    def _animate_opacity(self, target: float, duration: int, on_finish=None):
+    def _animate_opacity(self, target: float, duration: int, on_finish: Callable | None = None) -> QPropertyAnimation:
         if self._fade_anim:
+            try:
+                self._fade_anim.finished.disconnect()
+            except TypeError:
+                pass
             self._fade_anim.stop()
         self._fade_anim = QPropertyAnimation(self, b"windowOpacity")
         self._fade_anim.setDuration(duration)
@@ -196,14 +201,14 @@ class ModalOverlay(QWidget):
         self._fade_anim.start()
         return self._fade_anim
 
-    def _on_loading_timeout(self):
+    def _on_loading_timeout(self) -> None:
         if not self._loading_active:
             return
         self._loading_dots = (self._loading_dots + 1) % 4
         self._translation_label.setText(f"Translating{'.' * self._loading_dots}")
 
-    def _position_and_show(self, cursor_x: int, cursor_y: int):
-        MODAL_WIDTH = 520
+    def _position_and_show(self, cursor_x: int, cursor_y: int) -> None:
+        MODAL_WIDTH = 440
         MARGIN = 15
         GAP = 15
 
@@ -251,10 +256,10 @@ class ModalOverlay(QWidget):
         self._animate_opacity(1.0, 150)
         self._start_mouse_hook()
 
-    def _start_mouse_hook(self):
+    def _start_mouse_hook(self) -> None:
         self._stop_mouse_hook()
 
-        def on_event(e):
+        def on_event(e: mouse.ButtonEvent | mouse.MoveEvent) -> None:
             if isinstance(e, mouse.ButtonEvent) and e.event_type == 'up' and e.button == 'left':
                 x, y = mouse.get_position()
                 rect = self.geometry()
@@ -263,7 +268,7 @@ class ModalOverlay(QWidget):
 
         self._mouse_hook_ref = mouse.hook(on_event)
 
-    def _stop_mouse_hook(self):
+    def _stop_mouse_hook(self) -> None:
         if self._mouse_hook_ref is not None:
             try:
                 mouse.unhook(self._mouse_hook_ref)
@@ -271,11 +276,11 @@ class ModalOverlay(QWidget):
                 pass
             self._mouse_hook_ref = None
 
-    def _fade_out(self):
+    def _fade_out(self) -> None:
         self._stop_mouse_hook()
         self._animate_opacity(0.0, 100, self.hide)
 
-    def hideEvent(self, event):
+    def hideEvent(self, event) -> None:
         self._stop_loading_animation()
         self._stop_mouse_hook()
         self._source_label.clear()
@@ -283,10 +288,10 @@ class ModalOverlay(QWidget):
         self._provider_label.clear()
         super().hideEvent(event)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event) -> None:
         event.accept()
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event) -> None:
         if event.key() == Qt.Key.Key_Escape:
             self._fade_out()
         super().keyPressEvent(event)

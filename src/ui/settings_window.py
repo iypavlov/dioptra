@@ -89,12 +89,10 @@ class SettingsWindow(QDialog):
         layout.addWidget(self._ollama_group)
 
         mod_layout = QHBoxLayout()
-        mod_layout.addWidget(QLabel("Selection modifier:"))
-        self._modifier_combo = QComboBox()
-        self._modifier_combo.addItem("Ctrl", "ctrl")
-        self._modifier_combo.addItem("Alt", "alt")
-        self._modifier_combo.addItem("Win", "win")
-        mod_layout.addWidget(self._modifier_combo)
+        mod_layout.addWidget(QLabel("Selection hotkey:"))
+        self._modifier_input = QLineEdit()
+        self._modifier_input.setPlaceholderText("e.g. ctrl+shift, alt+shift, ctrl")
+        mod_layout.addWidget(self._modifier_input)
         layout.addLayout(mod_layout)
 
         layout.addStretch()
@@ -156,9 +154,7 @@ class SettingsWindow(QDialog):
         self._ollama_model_combo.setEditText(self._settings.ollama_model)
         self._ollama_timeout_spin.setValue(self._settings.ollama_timeout)
         self._on_provider_changed(self._provider_combo.currentIndex())
-        midx = self._modifier_combo.findData(self._settings.selection_modifier)
-        if midx >= 0:
-            self._modifier_combo.setCurrentIndex(midx)
+        self._modifier_input.setText(self._settings.selection_modifier)
 
     def _save(self):
         self._settings.target_language = self._lang_combo.currentData()
@@ -166,5 +162,5 @@ class SettingsWindow(QDialog):
         self._settings.ollama_url = self._ollama_url_input.text().strip()
         self._settings.ollama_model = self._ollama_model_combo.currentText().strip()
         self._settings.ollama_timeout = self._ollama_timeout_spin.value()
-        self._settings.selection_modifier = self._modifier_combo.currentData()
+        self._settings.selection_modifier = self._modifier_input.text().strip()
         self.accept()

@@ -11,7 +11,7 @@ import mouse
 import keyboard
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QWidget
 from PyQt6.QtGui import QIcon, QAction
-from PyQt6.QtCore import QObject, pyqtSignal, QThread, Qt
+from PyQt6.QtCore import QObject, pyqtSignal, QThread, QTimer, Qt
 
 from ocr_service import OcrService
 from translation.base import TranslatorFactory
@@ -76,32 +76,20 @@ class ScreenTranslatorApp:
         self._thread.finished.connect(self._worker.deleteLater)
         self._thread.start()
 
-        self._modifier = self._settings.selection_modifier
         self._modifier_pressed = False
         self._mouse_hook = None
         self._request_seq = 0
-        self._modifier_hooks = []
         self._crosshair = None
-        self._setup_modifier_hooks()
+
+        self._combo_timer = QTimer()
+        self._combo_timer.timeout.connect(self._poll_combo)
+        self._combo_timer.start(50)
 
         self._settings_window = None
         self._setup_tray()
 
-    def _setup_modifier_hooks(self):
-        for hook in self._modifier_hooks:
-            try:
-                keyboard.unhook(hook)
-            except Exception:
-                pass
-        self._modifier_hooks = []
-        self._modifier = self._settings.selection_modifier
-        h1 = keyboard.on_press_key(self._modifier, self._on_modifier_down, suppress=False)
-        self._modifier_hooks.append(h1)
-        h2 = keyboard.on_release_key(self._modifier, self._on_modifier_up, suppress=False)
-        self._modifier_hooks.append(h2)
-
     def _on_modifier_changed(self, modifier: str):
-        self._setup_modifier_hooks()
+        pass
 
     def _show_crosshair(self):
         if self._crosshair is None:
@@ -123,20 +111,24 @@ class ScreenTranslatorApp:
         if self._crosshair is not None:
             self._crosshair.hide()
 
-    def _on_modifier_down(self, event):
-        self._modifier_pressed = True
-        self._mouse_hook = mouse.hook(self._on_mouse_event)
-        self._show_crosshair()
+    def _poll_combo(self):
+        combo = self._settings.selection_modifier
+        try:
+            is_down = keyboard.is_pressed(combo)
+        except Exception:
+            is_down = False
 
-    def _on_modifier_up(self, event):
-        self._modifier_pressed = False
-        self._hide_crosshair()
-        if self._region_selector.is_selecting:
-            x, y = mouse.get_position()
-            self._on_region_end(x, y)
-            return
-        self._unhook_mouse()
-        self._signal_bridge.region_end.emit(0, 0)
+        if is_down and not self._modifier_pressed:
+            self._modifier_pressed = True
+            self._mouse_hook = mouse.hook(self._on_mouse_event)
+            self._show_crosshair()
+        elif not is_down and self._modifier_pressed:
+            self._modifier_pressed = False
+            self._hide_crosshair()
+            if self._region_selector.is_selecting:
+                x, y = mouse.get_position()
+                self._region_selector.end_selection(x, y)
+            self._unhook_mouse()
 
     def _unhook_mouse(self):
         if self._mouse_hook:
