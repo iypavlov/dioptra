@@ -7,6 +7,7 @@ class TranslationWorker(QObject):
     ocr_result = pyqtSignal(str, int)
     translation_result = pyqtSignal(str, str, int)
     error_occurred = pyqtSignal(str, int)
+    no_text_found = pyqtSignal(int)
     request_process = pyqtSignal(object, int, int, int)
 
     def __init__(self, ocr_service, translator, cache=None) -> None:
@@ -39,12 +40,12 @@ class TranslationWorker(QObject):
                 return
 
             if not words:
-                self.error_occurred.emit("No text found", request_seq)
+                self.no_text_found.emit(request_seq)
                 return
 
             text = " ".join(w["text"] for w in words if w["confidence"] > 0.3)
             if not text or not text.strip():
-                self.error_occurred.emit("No recognizable text", request_seq)
+                self.no_text_found.emit(request_seq)
                 return
 
             self.ocr_result.emit(text, request_seq)

@@ -157,8 +157,8 @@ class SettingsWindow(QDialog):
         self._modifier_input.setText(self._settings.selection_modifier)
 
     def _save(self):
-        self._settings.target_language = self._lang_combo.currentData()
         self._settings.translator = self._provider_combo.currentData()
+        self._settings.target_language = self._lang_combo.currentData()
         self._settings.ollama_url = self._ollama_url_input.text().strip()
         self._settings.ollama_model = self._ollama_model_combo.currentText().strip()
         self._settings.ollama_timeout = self._ollama_timeout_spin.value()

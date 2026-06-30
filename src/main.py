@@ -73,6 +73,7 @@ class ScreenTranslatorApp:
         self._worker.ocr_result.connect(self._on_worker_ocr)
         self._worker.translation_result.connect(self._on_worker_translation)
         self._worker.error_occurred.connect(self._on_worker_error)
+        self._worker.no_text_found.connect(self._on_worker_no_text)
         self._thread.finished.connect(self._worker.deleteLater)
         self._thread.start()
 
@@ -184,6 +185,8 @@ class ScreenTranslatorApp:
 
     def _on_translator_changed(self, provider: str):
         self._translator = self._create_translator()
+        if hasattr(self._translator, "set_target_language"):
+            self._translator.set_target_language(self._settings.target_language)
         provider_name = {"ollama": "Ollama", "google": "Google Translate"}.get(provider, provider)
         self._modal.set_provider(provider_name)
 
@@ -194,15 +197,9 @@ class ScreenTranslatorApp:
     def _setup_tray(self):
         icon_path = str(ASSETS_DIR / "icon.png")
         self._tray_icon = QSystemTrayIcon(QIcon(icon_path))
-        self._tray_icon.setToolTip("Screen Translator")
+        self._tray_icon.setToolTip("Dioptra")
 
         self._tray_menu = QMenu()
-
-        self._show_action = QAction("Show/Hide")
-        self._show_action.triggered.connect(
-            lambda: self._modal.show() if self._modal.isHidden() else self._modal.hide()
-        )
-        self._tray_menu.addAction(self._show_action)
 
         self._settings_action = QAction("Settings")
         self._settings_action.triggered.connect(lambda: self._open_settings())
@@ -218,12 +215,12 @@ class ScreenTranslatorApp:
         self._tray_icon.show()
 
     def _open_settings(self):
-        print("[Screen Translator] _open_settings called", flush=True)
+        print("[Dioptra] _open_settings called", flush=True)
         try:
             w = SettingsWindow(self._settings)
             w.exec()
         except Exception as e:
-            print(f"[Screen Translator] Settings error: {e}", flush=True)
+            print(f"[Dioptra] Settings error: {e}", flush=True)
             import traceback
             traceback.print_exc()
 
@@ -247,6 +244,11 @@ class ScreenTranslatorApp:
     def _on_selection_cancelled(self):
         self._modal.hide()
 
+    def _on_worker_no_text(self, request_seq: int):
+        if request_seq != self._request_seq:
+            return
+        self._modal.hide()
+
     def _on_worker_error(self, message: str, request_seq: int):
         if request_seq != self._request_seq:
             return
@@ -267,6 +269,6 @@ if __name__ == "__main__":
     try:
         ScreenTranslatorApp().run()
     except Exception as e:
-        print(f"[Screen Translator] Fatal: {e}", flush=True)
+        print(f"[Dioptra] Fatal: {e}", flush=True)
         traceback.print_exc()
         sys.exit(1)

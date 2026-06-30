@@ -8,6 +8,11 @@ class OcrService:
         self._lang = lang
         self._ocr: PaddleOCR | None = None
 
+    def set_lang(self, lang: str) -> None:
+        if lang != self._lang:
+            self._lang = lang
+            self._ocr = None
+
     def _ensure_ocr(self) -> PaddleOCR:
         if self._ocr is None:
             self._ocr = PaddleOCR(use_angle_cls=False, lang=self._lang)
