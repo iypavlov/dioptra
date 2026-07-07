@@ -1,6 +1,6 @@
 from collections.abc import Callable
 import mouse
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea
 from PyQt6.QtCore import Qt, QObject, pyqtSignal, QTimer, QPropertyAnimation
 from PyQt6.QtGui import QFont
 
@@ -30,6 +30,11 @@ class _BlockWidget(QWidget):
                 if ih < 0:
                     ih = item.sizeHint().height()
                 if ih > 0:
+                    w_item = item.widget()
+                    if w_item is not None:
+                        max_h = w_item.maximumHeight()
+                        if 0 < max_h < ih:
+                            ih = max_h
                     h += ih
                 if i < ly.count() - 1:
                     h += ly.spacing()
@@ -68,6 +73,34 @@ class ModalOverlay(QWidget):
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
+        self._scroll = QScrollArea()
+        self._scroll.setWidgetResizable(False)
+        self._scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self._scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self._scroll.setObjectName("modalScroll")
+        self._scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        self._scroll.setStyleSheet("""
+            #modalScroll { background: transparent; border: none; }
+            #modalScroll > QScrollBar:vertical {
+                background: transparent; width: 6px; margin: 0; border: none;
+            }
+            #modalScroll > QScrollBar::handle:vertical {
+                background: #3a3d4e; border-radius: 3px; min-height: 30px;
+            }
+            #modalScroll > QScrollBar::handle:vertical:hover {
+                background: #4a4d5e;
+            }
+            #modalScroll > QScrollBar::add-line:vertical,
+            #modalScroll > QScrollBar::sub-line:vertical {
+                height: 0; border: none;
+            }
+            #modalScroll > QScrollBar::add-page:vertical,
+            #modalScroll > QScrollBar::sub-page:vertical {
+                background: transparent;
+            }
+        """)
+        self._scroll.viewport().setStyleSheet("background: transparent;")
+
         self._bg = _BlockWidget()
         self._bg.setObjectName("modalBg")
         self._bg.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
@@ -86,7 +119,7 @@ class ModalOverlay(QWidget):
         source_block = _BlockWidget()
         source_block.setStyleSheet("background: transparent;")
         sb = QVBoxLayout(source_block)
-        sb.setContentsMargins(24, 18, 24, 8)
+        sb.setContentsMargins(24, 20, 28, 12)
         label_src = QLabel("WORD")
         label_src.setFont(QFont("Segoe UI", 8))
         label_src.setStyleSheet("color: #585e72; background: transparent; letter-spacing: 1px;")
@@ -110,7 +143,7 @@ class ModalOverlay(QWidget):
         trans_block = _BlockWidget()
         trans_block.setStyleSheet("background: transparent;")
         tb = QVBoxLayout(trans_block)
-        tb.setContentsMargins(24, 12, 24, 14)
+        tb.setContentsMargins(24, 14, 28, 18)
         label_tr = QLabel("TRANSLATION")
         label_tr.setFont(QFont("Segoe UI", 8))
         label_tr.setStyleSheet("color: #585e72; background: transparent; letter-spacing: 1px;")
@@ -132,7 +165,8 @@ class ModalOverlay(QWidget):
         footer.addStretch()
         bg.addLayout(footer)
 
-        root.addWidget(self._bg)
+        self._scroll.setWidget(self._bg)
+        root.addWidget(self._scroll)
         self.setLayout(root)
 
     def clear_content(self) -> None:
@@ -216,12 +250,22 @@ class ModalOverlay(QWidget):
         content_h = self._bg.heightForWidth(MODAL_WIDTH)
         if content_h <= 0:
             content_h = self._bg.minimumSizeHint().height()
-        self._bg.setFixedHeight(content_h)
-        self.setFixedSize(MODAL_WIDTH, content_h)
 
         screen = self.screen()
         sg = screen.availableGeometry() if screen else None
-        w, h = MODAL_WIDTH, content_h
+
+        if sg:
+            max_avail_h = sg.height() - 2 * MARGIN
+            if content_h > max_avail_h:
+                modal_h = max_avail_h
+            else:
+                modal_h = content_h
+        else:
+            modal_h = content_h
+
+        self._bg.setFixedHeight(content_h)
+        self.setFixedSize(MODAL_WIDTH, modal_h)
+        w, h = MODAL_WIDTH, modal_h
 
         if sg:
             candidates = [
