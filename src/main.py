@@ -24,8 +24,7 @@ from ui.modal_window import ModalOverlay
 from ui.settings_window import SettingsWindow
 from ui.region_selector import RegionSelector
 from settings import SettingsManager
-
-ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+from app_paths import asset_path
 
 
 class SignalBridge(QObject):
@@ -113,6 +112,12 @@ class ScreenTranslatorApp:
             self._crosshair.hide()
 
     def _poll_combo(self):
+        if self._modal.isVisible():
+            if self._mouse_hook:
+                self._unhook_mouse()
+            self._hide_crosshair()
+            return
+
         combo = self._settings.selection_modifier
         try:
             is_down = keyboard.is_pressed(combo)
@@ -195,8 +200,10 @@ class ScreenTranslatorApp:
             self._translator = self._create_translator()
 
     def _setup_tray(self):
-        icon_path = str(ASSETS_DIR / "icon.png")
-        self._tray_icon = QSystemTrayIcon(QIcon(icon_path))
+        icon_path = asset_path("icon.png")
+        icon = QIcon(str(icon_path)) if icon_path.is_file() else QIcon()
+        self._app.setWindowIcon(icon)
+        self._tray_icon = QSystemTrayIcon(icon)
         self._tray_icon.setToolTip("Dioptra")
 
         self._tray_menu = QMenu()

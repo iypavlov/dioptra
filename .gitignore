@@ -32,3 +32,5 @@ Thumbs.db
 # App data
 .screen-translator/
 docs/
+!docs/plans/
+!docs/plans/**

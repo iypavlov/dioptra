@@ -130,6 +130,9 @@ class ModalOverlay(QWidget):
         self._source_label.setFont(src_font)
         self._source_label.setStyleSheet("color: #e8eaf0; background: transparent;")
         self._source_label.setWordWrap(True)
+        self._source_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
         sb.addWidget(self._source_label)
         bg.addWidget(source_block)
 
@@ -152,6 +155,9 @@ class ModalOverlay(QWidget):
         self._translation_label.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
         self._translation_label.setStyleSheet("color: #ffffff; background: transparent;")
         self._translation_label.setWordWrap(True)
+        self._translation_label.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
         tb.addWidget(self._translation_label)
         bg.addWidget(trans_block)
 
