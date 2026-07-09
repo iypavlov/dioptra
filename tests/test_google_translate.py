@@ -1,4 +1,4 @@
-from src.translation.google_translate import GoogleTranslateTranslator
+from dioptra.translation.google_translate import GoogleTranslateTranslator
 
 
 def test_init() -> None:

@@ -1,7 +1,11 @@
 import json
 from pathlib import Path
+
 from PyQt6.QtCore import QObject, pyqtSignal
 
+from dioptra.log import get_logger
+
+log = get_logger("dioptra.settings")
 
 DEFAULT_SETTINGS = {
     "target_language": "ru",
@@ -32,9 +36,11 @@ class SettingsManager(QObject):
     def _load(self):
         if self._file.exists():
             try:
-                with open(self._file, "r", encoding="utf-8") as f:
+                with open(self._file, encoding="utf-8") as f:
                     self._data = {**DEFAULT_SETTINGS, **json.load(f)}
-            except Exception:
+                log.debug("Settings loaded from %s", self._file)
+            except Exception as e:
+                log.warning("Failed to load settings: %s, using defaults", e)
                 self._data = dict(DEFAULT_SETTINGS)
 
     def _save(self):
@@ -49,6 +55,7 @@ class SettingsManager(QObject):
     @target_language.setter
     def target_language(self, value: str):
         if value != self._data.get("target_language"):
+            log.info("Setting target language: %s", value)
             self._data["target_language"] = value
             self._save()
             self.language_changed.emit(value)
@@ -80,6 +87,7 @@ class SettingsManager(QObject):
     @translator.setter
     def translator(self, value: str):
         if value != self._data.get("translator"):
+            log.info("Switching translator: %s", value)
             self._data["translator"] = value
             self._save()
             self.translator_changed.emit(value)

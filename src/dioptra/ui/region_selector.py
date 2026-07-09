@@ -1,8 +1,12 @@
 import mss
 from PIL import Image
-from PyQt6.QtWidgets import QWidget, QApplication
-from PyQt6.QtCore import Qt, QRectF, pyqtSignal
-from PyQt6.QtGui import QPainter, QPen, QColor, QBrush
+from PyQt6.QtCore import QRectF, Qt, pyqtSignal
+from PyQt6.QtGui import QBrush, QColor, QPainter, QPen
+from PyQt6.QtWidgets import QApplication, QWidget
+
+from dioptra.log import get_logger
+
+log = get_logger("dioptra.ui.selector")
 
 
 class RegionSelector(QWidget):

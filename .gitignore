@@ -2,13 +2,16 @@
 __pycache__/
 *.py[cod]
 *.egg-info/
-dist/
-build/
 *.egg
-*.spec
 
 # pytest
 .pytest_cache/
+
+# Ruff
+.ruff_cache/
+
+# mypy
+.mypy_cache/
 
 # Virtual environment
 venv/
@@ -28,6 +31,11 @@ Thumbs.db
 # Project
 *.bat
 *.log
+
+# Build artifacts
+build/
+dist/
+*.spec
 
 # App data
 .screen-translator/

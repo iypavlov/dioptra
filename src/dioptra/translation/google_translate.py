@@ -1,4 +1,5 @@
 from deep_translator import GoogleTranslator
+
 from .base import AbstractTranslator
 
 

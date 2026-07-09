@@ -1,30 +1,28 @@
-import sys
-import traceback
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 import os
+import sys
+
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window=false"
 
-import mouse
 import keyboard
-from PyQt6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QWidget
-from PyQt6.QtGui import QIcon, QAction
-from PyQt6.QtCore import QObject, pyqtSignal, QThread, QTimer, Qt
+import mouse
+from PyQt6.QtCore import QObject, Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon, QWidget
 
-from ocr_service import OcrService
-from translation.base import TranslatorFactory
-from translation.google_translate import GoogleTranslateTranslator
-from translation.ollama_translate import OllamaTranslateTranslator
+from dioptra.app_paths import asset_path
+from dioptra.cache import TranslationCache
+from dioptra.log import get_logger, setup_logger
+from dioptra.ocr_service import OcrService
+from dioptra.settings import SettingsManager
+from dioptra.translation.base import TranslatorFactory
+from dioptra.translation.google_translate import GoogleTranslateTranslator
+from dioptra.translation.ollama_translate import OllamaTranslateTranslator
+from dioptra.translation_worker import TranslationWorker
+from dioptra.ui.modal_window import ModalOverlay
+from dioptra.ui.region_selector import RegionSelector
+from dioptra.ui.settings_window import SettingsWindow
 
-from translation_worker import TranslationWorker
-from cache import TranslationCache
-from ui.modal_window import ModalOverlay
-from ui.settings_window import SettingsWindow
-from ui.region_selector import RegionSelector
-from settings import SettingsManager
-from app_paths import asset_path
+log = get_logger("dioptra")
 
 
 class SignalBridge(QObject):
@@ -44,6 +42,9 @@ class ScreenTranslatorApp:
         self._settings.ollama_settings_changed.connect(self._on_ollama_settings_changed)
         self._settings.modifier_changed.connect(self._on_modifier_changed)
 
+        log.info("Starting Dioptra translator=%s lang=%s",
+                  self._settings.translator, self._settings.target_language)
+
         self._signal_bridge = SignalBridge()
         self._signal_bridge.region_start.connect(self._on_region_start)
         self._signal_bridge.region_move.connect(self._on_region_move)
@@ -55,6 +56,7 @@ class ScreenTranslatorApp:
         self._ocr_service = OcrService()
         import threading
         threading.Thread(target=self._ocr_service._ensure_ocr, daemon=True).start()
+        log.debug("OCR pre-warm thread started")
         self._cache = TranslationCache()
         self._modal = ModalOverlay()
         provider_name = {"ollama": "Ollama", "google": "Google Translate"}.get(
@@ -75,6 +77,7 @@ class ScreenTranslatorApp:
         self._worker.no_text_found.connect(self._on_worker_no_text)
         self._thread.finished.connect(self._worker.deleteLater)
         self._thread.start()
+        log.debug("Worker thread started")
 
         self._modifier_pressed = False
         self._mouse_hook = None
@@ -222,46 +225,52 @@ class ScreenTranslatorApp:
         self._tray_icon.show()
 
     def _open_settings(self):
-        print("[Dioptra] _open_settings called", flush=True)
+        log.debug("Opening settings window")
         try:
             w = SettingsWindow(self._settings)
             w.exec()
+            log.info("Settings closed")
         except Exception as e:
-            print(f"[Dioptra] Settings error: {e}", flush=True)
-            import traceback
-            traceback.print_exc()
+            log.error("Settings error: %s", e, exc_info=True)
 
     def _on_region_captured(self, image: object, cx: int, cy: int):
         self._worker.cancel()
         self._last_cx = cx
         self._last_cy = cy
         self._modal.show_loading(cx, cy)
+        log.debug("Region captured at (%d, %d) seq=%d", cx, cy, self._request_seq)
         self._worker.request_process.emit(image, cx, cy, self._request_seq)
 
     def _on_worker_ocr(self, text: str, request_seq: int):
         if request_seq != self._request_seq:
             return
+        log.debug("OCR result: '%s' (seq=%d)", text[:60], request_seq)
         self._modal.show_ocr_progress(text, self._last_cx, self._last_cy)
 
     def _on_worker_translation(self, word: str, translation: str, request_seq: int):
         if request_seq != self._request_seq:
             return
+        log.info("Translation: '%s' -> '%s' (seq=%d)", word[:40], translation[:80], request_seq)
         self._modal.show_translation(word, translation, self._last_cx, self._last_cy)
 
     def _on_selection_cancelled(self):
+        log.debug("Selection cancelled")
         self._modal.hide()
 
     def _on_worker_no_text(self, request_seq: int):
         if request_seq != self._request_seq:
             return
+        log.debug("No text found in selection (seq=%d)", request_seq)
         self._modal.hide()
 
     def _on_worker_error(self, message: str, request_seq: int):
         if request_seq != self._request_seq:
             return
+        log.warning("Worker error: %s (seq=%d)", message, request_seq)
         self._modal.show_message(message, self._last_cx, self._last_cy)
 
     def _quit(self):
+        log.info("Shutting down Dioptra")
         self._worker.cancel()
         self._thread.quit()
         self._thread.wait(2000)
@@ -272,10 +281,16 @@ class ScreenTranslatorApp:
         sys.exit(self._app.exec())
 
 
+def main() -> None:
+    setup_logger()
+    log.info("Dioptra v0.1.0 starting")
+    app = ScreenTranslatorApp()
+    app.run()
+
+
 if __name__ == "__main__":
     try:
-        ScreenTranslatorApp().run()
+        main()
     except Exception as e:
-        print(f"[Dioptra] Fatal: {e}", flush=True)
-        traceback.print_exc()
+        log.critical("Fatal error: %s", e, exc_info=True)
         sys.exit(1)

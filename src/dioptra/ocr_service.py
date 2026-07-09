@@ -1,6 +1,10 @@
 import numpy as np
-from PIL import Image, ImageEnhance, ImageFilter
 from paddleocr import PaddleOCR
+from PIL import Image, ImageEnhance, ImageFilter
+
+from dioptra.log import get_logger
+
+log = get_logger("dioptra.ocr")
 
 
 class OcrService:
@@ -10,25 +14,25 @@ class OcrService:
 
     def set_lang(self, lang: str) -> None:
         if lang != self._lang:
+            log.debug("OCR language changed: %s -> %s", self._lang, lang)
             self._lang = lang
             self._ocr = None
 
     def _ensure_ocr(self) -> PaddleOCR:
         if self._ocr is None:
+            log.info("Initializing PaddleOCR (lang=%s)", self._lang)
             self._ocr = PaddleOCR(use_angle_cls=False, lang=self._lang)
+            log.info("PaddleOCR initialized")
         return self._ocr
 
     def recognize(self, image: Image.Image) -> list[dict]:
         img = image.convert("RGB")
 
-        # Upscale 2x for better small text recognition
         w, h = img.size
         img = img.resize((w * 2, h * 2), Image.LANCZOS)
 
-        # Sharpen
         img = img.filter(ImageFilter.SHARPEN)
 
-        # Increase contrast
         enhancer = ImageEnhance.Contrast(img)
         img = enhancer.enhance(1.5)
 
@@ -44,4 +48,5 @@ class OcrService:
                     "box": [[int(coord[0] / 2), int(coord[1] / 2)] for coord in box],
                     "confidence": confidence,
                 })
+        log.debug("OCR recognized %d words in %dx%d image", len(words), w, h)
         return words

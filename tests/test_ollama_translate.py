@@ -1,6 +1,7 @@
 import json
-from unittest.mock import patch, MagicMock
-from src.translation.ollama_translate import OllamaTranslateTranslator
+from unittest.mock import MagicMock, patch
+
+from dioptra.translation.ollama_translate import OllamaTranslateTranslator
 
 
 def test_init() -> None:

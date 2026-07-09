@@ -3,6 +3,10 @@ import sqlite3
 import time
 from pathlib import Path
 
+from dioptra.log import get_logger
+
+log = get_logger("dioptra.cache")
+
 
 class TranslationCache:
     def __init__(self, db_path: str | None = None):
@@ -25,10 +29,15 @@ class TranslationCache:
         )
         self._conn.commit()
         self._ttl = 3600
+        log.debug("Cache opened at %s (TTL=%ds)", db_path, self._ttl)
 
     def cleanup(self):
-        self._conn.execute("DELETE FROM cache WHERE created_at <= ?", (time.time() - self._ttl,))
+        deleted = self._conn.execute(
+            "DELETE FROM cache WHERE created_at <= ?", (time.time() - self._ttl,)
+        ).rowcount
         self._conn.commit()
+        if deleted:
+            log.debug("Cache cleanup: removed %d expired entries", deleted)
 
     def get(self, image_bytes: bytes, target_lang: str = "ru") -> tuple[str, str] | None:
         self.cleanup()
@@ -53,3 +62,4 @@ class TranslationCache:
 
     def close(self) -> None:
         self._conn.close()
+        log.debug("Cache closed")

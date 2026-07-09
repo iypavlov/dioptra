@@ -1,6 +1,7 @@
 import json
-import urllib.request
 import urllib.error
+import urllib.request
+
 from .base import AbstractTranslator
 
 SYSTEM_PROMPT_TEMPLATE = (

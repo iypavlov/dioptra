@@ -1,12 +1,11 @@
 import sys
-from pathlib import Path
 
-from app_paths import app_root, asset_path
+from dioptra.app_paths import app_root, asset_path
 
 
 def test_app_root_in_dev_points_to_project_root():
     root = app_root()
-    assert (root / "src" / "main.py").is_file()
+    assert (root / "src" / "dioptra" / "__main__.py").is_file()
     assert (root / "assets" / "icon.png").is_file()
 
 

@@ -1,4 +1,4 @@
-from src.translation.base import AbstractTranslator, TranslatorFactory
+from dioptra.translation.base import AbstractTranslator, TranslatorFactory
 
 
 class FakeTranslator(AbstractTranslator):
@@ -24,7 +24,7 @@ def test_create_with_kwargs() -> None:
 def test_unknown_translator() -> None:
     try:
         TranslatorFactory.create("nonexistent")
-        assert False, "Expected ValueError"
+        raise AssertionError("Expected ValueError")
     except ValueError:
         pass
 

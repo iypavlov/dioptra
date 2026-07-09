@@ -1,8 +1,7 @@
-import time
 import tempfile
 from pathlib import Path
 
-from src.cache import TranslationCache
+from dioptra.cache import TranslationCache
 
 
 def test_set_and_get() -> None:

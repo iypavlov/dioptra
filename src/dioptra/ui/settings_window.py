@@ -1,12 +1,21 @@
-from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QComboBox, QLineEdit, QPushButton,
-    QGroupBox, QSpinBox,
-)
 from PyQt6.QtCore import Qt
-from settings import SettingsManager
-from translation.ollama_translate import OllamaTranslateTranslator
+from PyQt6.QtWidgets import (
+    QComboBox,
+    QDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QSpinBox,
+    QVBoxLayout,
+)
 
+from dioptra.log import get_logger
+from dioptra.settings import SettingsManager
+from dioptra.translation.ollama_translate import OllamaTranslateTranslator
+
+log = get_logger("dioptra.ui.settings")
 
 LANGUAGES = {
     "ru": "Russian",
@@ -129,12 +138,15 @@ class SettingsWindow(QDialog):
 
     def _refresh_ollama_models(self):
         url = self._ollama_url_input.text().strip() or "http://localhost:11434"
+        log.debug("Refreshing Ollama models from %s", url)
         models = OllamaTranslateTranslator.list_models(url)
         current = self._ollama_model_combo.currentText()
         self._ollama_model_combo.clear()
         if models:
+            log.debug("Found %d Ollama models: %s", len(models), ", ".join(models))
             self._ollama_model_combo.addItems(models)
         else:
+            log.warning("No Ollama models found at %s", url)
             self._ollama_model_combo.setPlaceholderText("No models found (check URL)")
         if current:
             idx = self._ollama_model_combo.findText(current)
@@ -157,6 +169,7 @@ class SettingsWindow(QDialog):
         self._modifier_input.setText(self._settings.selection_modifier)
 
     def _save(self):
+        log.info("Saving settings")
         self._settings.translator = self._provider_combo.currentData()
         self._settings.target_language = self._lang_combo.currentData()
         self._settings.ollama_url = self._ollama_url_input.text().strip()
