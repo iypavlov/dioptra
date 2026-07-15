@@ -3,7 +3,15 @@ from dioptra.translation.base import AbstractTranslator, TranslatorFactory
 
 class FakeTranslator(AbstractTranslator):
     def __init__(self, **kwargs) -> None:
+        self._target = kwargs.get("target", "ru")
         self._kwargs = kwargs
+
+    @property
+    def target_language(self) -> str:
+        return self._target
+
+    def set_target_language(self, lang: str) -> None:
+        self._target = lang
 
     def translate(self, text: str, source: str = "en", target: str = "ru") -> str:
         return f"[{source}->{target}] {text}"

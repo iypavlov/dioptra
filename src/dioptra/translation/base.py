@@ -6,6 +6,15 @@ class AbstractTranslator(ABC):
     def translate(self, text: str, source: str = "en", target: str = "ru") -> str:
         ...
 
+    @abstractmethod
+    def set_target_language(self, lang: str) -> None:
+        ...
+
+    @property
+    @abstractmethod
+    def target_language(self) -> str:
+        ...
+
 
 class TranslatorFactory:
     _registry: dict[str, type[AbstractTranslator]] = {}

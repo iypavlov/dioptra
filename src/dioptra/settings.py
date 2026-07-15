@@ -9,7 +9,6 @@ log = get_logger("dioptra.settings")
 
 DEFAULT_SETTINGS = {
     "target_language": "ru",
-    "hotkey": "ctrl+shift+t",
     "adaptivity_enabled": True,
     "translator": "ollama",
     "selection_modifier": "ctrl",
@@ -21,7 +20,6 @@ DEFAULT_SETTINGS = {
 
 class SettingsManager(QObject):
     language_changed = pyqtSignal(str)
-    hotkey_changed = pyqtSignal(str)
     translator_changed = pyqtSignal(str)
     ollama_settings_changed = pyqtSignal(str, str, int)
     modifier_changed = pyqtSignal(str)
@@ -38,7 +36,6 @@ class SettingsManager(QObject):
             try:
                 with open(self._file, encoding="utf-8") as f:
                     self._data = {**DEFAULT_SETTINGS, **json.load(f)}
-                log.debug("Settings loaded from %s", self._file)
             except Exception as e:
                 log.warning("Failed to load settings: %s, using defaults", e)
                 self._data = dict(DEFAULT_SETTINGS)
@@ -59,17 +56,6 @@ class SettingsManager(QObject):
             self._data["target_language"] = value
             self._save()
             self.language_changed.emit(value)
-
-    @property
-    def hotkey(self) -> str:
-        return self._data.get("hotkey", "ctrl+shift+t")
-
-    @hotkey.setter
-    def hotkey(self, value: str):
-        if value != self._data.get("hotkey"):
-            self._data["hotkey"] = value
-            self._save()
-            self.hotkey_changed.emit(value)
 
     @property
     def adaptivity_enabled(self) -> bool:

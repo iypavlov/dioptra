@@ -7,7 +7,7 @@ from dioptra.translation.ollama_translate import OllamaTranslateTranslator
 def test_init() -> None:
     t = OllamaTranslateTranslator(model="llama3", target_language="ru", timeout=15, url="http://localhost:11434")
     assert t._model == "llama3"
-    assert t._target_language == "ru"
+    assert t.target_language == "ru"
     assert t._timeout == 15
     assert t._url == "http://localhost:11434"
 
@@ -15,7 +15,7 @@ def test_init() -> None:
 def test_set_target_language() -> None:
     t = OllamaTranslateTranslator()
     t.set_target_language("de")
-    assert t._target_language == "de"
+    assert t.target_language == "de"
 
 
 def test_translate_success() -> None:

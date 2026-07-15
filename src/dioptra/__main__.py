@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window=false"
 
@@ -25,14 +26,13 @@ from dioptra.ui.settings_window import SettingsWindow
 log = get_logger("dioptra")
 
 
-class SignalBridge(QObject):
+class ScreenTranslatorApp(QObject):
     region_start = pyqtSignal(int, int)
     region_move = pyqtSignal(int, int)
     region_end = pyqtSignal(int, int)
 
-
-class ScreenTranslatorApp:
     def __init__(self):
+        super().__init__()
         self._app = QApplication(sys.argv)
         self._app.setQuitOnLastWindowClosed(False)
 
@@ -45,18 +45,15 @@ class ScreenTranslatorApp:
         log.info("Starting Dioptra translator=%s lang=%s",
                   self._settings.translator, self._settings.target_language)
 
-        self._signal_bridge = SignalBridge()
-        self._signal_bridge.region_start.connect(self._on_region_start)
-        self._signal_bridge.region_move.connect(self._on_region_move)
-        self._signal_bridge.region_end.connect(self._on_region_end)
+        self.region_start.connect(self._on_region_start)
+        self.region_move.connect(self._on_region_move)
+        self.region_end.connect(self._on_region_end)
 
         TranslatorFactory.register("google", GoogleTranslateTranslator)
         TranslatorFactory.register("ollama", OllamaTranslateTranslator)
         self._translator = self._create_translator()
         self._ocr_service = OcrService()
-        import threading
         threading.Thread(target=self._ocr_service._ensure_ocr, daemon=True).start()
-        log.debug("OCR pre-warm thread started")
         self._cache = TranslationCache()
         self._modal = ModalOverlay()
         provider_name = {"ollama": "Ollama", "google": "Google Translate"}.get(
@@ -77,7 +74,6 @@ class ScreenTranslatorApp:
         self._worker.no_text_found.connect(self._on_worker_no_text)
         self._thread.finished.connect(self._worker.deleteLater)
         self._thread.start()
-        log.debug("Worker thread started")
 
         self._modifier_pressed = False
         self._mouse_hook = None
@@ -151,11 +147,11 @@ class ScreenTranslatorApp:
         if isinstance(event, mouse.ButtonEvent) and event.button == 'left':
             x, y = mouse.get_position()
             if event.event_type == 'down':
-                self._signal_bridge.region_start.emit(x, y)
+                self.region_start.emit(x, y)
             elif event.event_type == 'up' and self._region_selector.is_selecting:
-                self._signal_bridge.region_end.emit(x, y)
+                self.region_end.emit(x, y)
         elif isinstance(event, mouse.MoveEvent) and self._region_selector.is_selecting:
-            self._signal_bridge.region_move.emit(event.x, event.y)
+            self.region_move.emit(event.x, event.y)
 
     def _on_region_start(self, x: int, y: int):
         self._hide_crosshair()
@@ -188,13 +184,11 @@ class ScreenTranslatorApp:
             return TranslatorFactory.create("google")
 
     def _on_language_changed(self, lang: str):
-        if hasattr(self._translator, "set_target_language"):
-            self._translator.set_target_language(lang)
+        self._translator.set_target_language(lang)
 
     def _on_translator_changed(self, provider: str):
         self._translator = self._create_translator()
-        if hasattr(self._translator, "set_target_language"):
-            self._translator.set_target_language(self._settings.target_language)
+        self._translator.set_target_language(self._settings.target_language)
         provider_name = {"ollama": "Ollama", "google": "Google Translate"}.get(provider, provider)
         self._modal.set_provider(provider_name)
 
@@ -225,11 +219,9 @@ class ScreenTranslatorApp:
         self._tray_icon.show()
 
     def _open_settings(self):
-        log.debug("Opening settings window")
         try:
             w = SettingsWindow(self._settings)
             w.exec()
-            log.info("Settings closed")
         except Exception as e:
             log.error("Settings error: %s", e, exc_info=True)
 
@@ -238,13 +230,11 @@ class ScreenTranslatorApp:
         self._last_cx = cx
         self._last_cy = cy
         self._modal.show_loading(cx, cy)
-        log.debug("Region captured at (%d, %d) seq=%d", cx, cy, self._request_seq)
         self._worker.request_process.emit(image, cx, cy, self._request_seq)
 
     def _on_worker_ocr(self, text: str, request_seq: int):
         if request_seq != self._request_seq:
             return
-        log.debug("OCR result: '%s' (seq=%d)", text[:60], request_seq)
         self._modal.show_ocr_progress(text, self._last_cx, self._last_cy)
 
     def _on_worker_translation(self, word: str, translation: str, request_seq: int):
@@ -254,13 +244,11 @@ class ScreenTranslatorApp:
         self._modal.show_translation(word, translation, self._last_cx, self._last_cy)
 
     def _on_selection_cancelled(self):
-        log.debug("Selection cancelled")
         self._modal.hide()
 
     def _on_worker_no_text(self, request_seq: int):
         if request_seq != self._request_seq:
             return
-        log.debug("No text found in selection (seq=%d)", request_seq)
         self._modal.hide()
 
     def _on_worker_error(self, message: str, request_seq: int):

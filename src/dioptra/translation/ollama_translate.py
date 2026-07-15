@@ -18,15 +18,19 @@ class OllamaTranslateTranslator(AbstractTranslator):
     def __init__(self, model: str = "llama3.2", target_language: str = "ru",
                  timeout: int = 10, url: str = "http://localhost:11434"):
         self._model = model
-        self._target_language = target_language
+        self._target_language_value = target_language
         self._timeout = timeout
         self._url = url.rstrip("/")
 
+    @property
+    def target_language(self) -> str:
+        return self._target_language_value
+
     def set_target_language(self, lang: str):
-        self._target_language = lang
+        self._target_language_value = lang
 
     def translate(self, text: str, **kwargs) -> str:
-        lang = self._target_language
+        lang = self._target_language_value
         payload = {
             "model": self._model,
             "messages": [

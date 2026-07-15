@@ -9,6 +9,10 @@ class GoogleTranslateTranslator(AbstractTranslator):
         self._target = target
         self._translator = GoogleTranslator(source=source, target=target)
 
+    @property
+    def target_language(self) -> str:
+        return self._target
+
     def set_target_language(self, lang: str):
         if lang != self._target:
             self._target = lang

@@ -29,16 +29,4 @@ Thumbs.db
 .DS_Store
 
 # Project
-*.bat
 *.log
-
-# Build artifacts
-build/
-dist/
-*.spec
-
-# App data
-.screen-translator/
-docs/
-!docs/plans/
-!docs/plans/**

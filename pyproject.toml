@@ -13,15 +13,11 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Desktop Environment",
-    "Topic :: Utilities",
 ]
 
 dependencies = [
-    "paddleocr>=2.8.0",
-    "paddlepaddle>=2.6.0",
+    "paddleocr>=2.8.0,<3.0",
+    "paddlepaddle>=2.6.0,<3.0",
     "mss>=9.0.0",
     "PyQt6>=6.7.0",
     "keyboard>=0.13.5",
@@ -35,8 +31,10 @@ dev = [
     "pytest>=8.0.0",
     "ruff>=0.5.0",
     "mypy>=1.10.0",
-    "pre-commit>=3.7.0",
 ]
+
+[project.scripts]
+dioptra = "dioptra.__main__:main"
 
 [tool.ruff]
 line-length = 100
@@ -65,9 +63,6 @@ files = ["src/dioptra"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-
-[project.scripts]
-dioptra = "dioptra.__main__:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
