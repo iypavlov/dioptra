@@ -13,7 +13,7 @@ class GoogleTranslateTranslator(AbstractTranslator):
     def target_language(self) -> str:
         return self._target
 
-    def set_target_language(self, lang: str):
+    def set_target_language(self, lang: str) -> None:
         if lang != self._target:
             self._target = lang
             self._translator = GoogleTranslator(source=self._source, target=lang)
@@ -23,4 +23,6 @@ class GoogleTranslateTranslator(AbstractTranslator):
             self._translator = GoogleTranslator(source=source, target=target)
             self._source = source
             self._target = target
-        return self._translator.translate(text)
+        result = self._translator.translate(text)
+        assert isinstance(result, str)
+        return result

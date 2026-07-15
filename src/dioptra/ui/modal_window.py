@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Any
 
 import mouse
 from PyQt6.QtCore import QObject, QPropertyAnimation, Qt, QTimer, pyqtSignal
@@ -15,10 +16,10 @@ class _MouseBridge(QObject):
 
 
 class _BlockWidget(QWidget):
-    def hasHeightForWidth(self):
+    def hasHeightForWidth(self) -> bool:
         return True
 
-    def heightForWidth(self, w):
+    def heightForWidth(self, w: int) -> int:
         ly = self.layout()
         if ly is not None:
             m = ly.contentsMargins()
@@ -26,6 +27,7 @@ class _BlockWidget(QWidget):
             h = m.top() + m.bottom()
             for i in range(ly.count()):
                 item = ly.itemAt(i)
+                assert item is not None
                 ih = -1
                 widget = item.widget()
                 if widget is not None and hasattr(widget, 'heightForWidth'):
@@ -48,9 +50,7 @@ class _BlockWidget(QWidget):
 
 
 class ModalOverlay(QWidget):
-    _provider_name: str = ""
-
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(None)
         self._bridge = _MouseBridge()
         self._bridge.clicked.connect(self.hide)
@@ -62,10 +62,11 @@ class ModalOverlay(QWidget):
         self._loading_timer.timeout.connect(self._on_loading_timeout)
         self._loading_dots = 0
         self._loading_active = False
-        self._fade_anim = None
+        self._fade_anim: QPropertyAnimation | None = None
+        self._provider_name: str = ""
         self._setup_ui()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint
             | Qt.WindowType.WindowStaysOnTopHint
@@ -104,7 +105,9 @@ class ModalOverlay(QWidget):
                 background: transparent;
             }
         """)
-        self._scroll.viewport().setStyleSheet("background: transparent;")
+        vp = self._scroll.viewport()
+        if vp is not None:
+            vp.setStyleSheet("background: transparent;")
 
         self._bg = _BlockWidget()
         self._bg.setObjectName("modalBg")
@@ -230,7 +233,10 @@ class ModalOverlay(QWidget):
         self._loading_active = False
         self._loading_timer.stop()
 
-    def _animate_opacity(self, target: float, duration: int, on_finish: Callable | None = None) -> QPropertyAnimation:
+    def _animate_opacity(
+        self, target: float, duration: int,
+        on_finish: Callable[[], None] | None = None,
+    ) -> QPropertyAnimation:
         if self._fade_anim:
             try:
                 self._fade_anim.finished.disconnect()
@@ -335,7 +341,7 @@ class ModalOverlay(QWidget):
         self._stop_mouse_hook()
         self._animate_opacity(0.0, 100, self.hide)
 
-    def hideEvent(self, event) -> None:
+    def hideEvent(self, event: Any) -> None:
         self._stop_loading_animation()
         self._stop_mouse_hook()
         self._source_label.clear()
@@ -343,10 +349,10 @@ class ModalOverlay(QWidget):
         self._provider_label.clear()
         super().hideEvent(event)
 
-    def mousePressEvent(self, event) -> None:
+    def mousePressEvent(self, event: Any) -> None:
         event.accept()
 
-    def keyPressEvent(self, event) -> None:
+    def keyPressEvent(self, event: Any) -> None:
         if event.key() == Qt.Key.Key_Escape:
             self._fade_out()
         super().keyPressEvent(event)

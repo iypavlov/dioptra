@@ -63,7 +63,11 @@ def get_logger(name: str = "dioptra") -> logging.Logger:
 
 
 def debug_mode() -> bool:
-    return logging.getLogger("dioptra").getEffectiveLevel() <= logging.DEBUG
+    root = logging.getLogger("dioptra")
+    for h in root.handlers:
+        if isinstance(h, logging.StreamHandler):
+            return h.level <= logging.DEBUG
+    return root.getEffectiveLevel() <= logging.DEBUG
 
 
 def log_path() -> Path | None:

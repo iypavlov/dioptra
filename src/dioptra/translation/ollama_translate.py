@@ -26,10 +26,10 @@ class OllamaTranslateTranslator(AbstractTranslator):
     def target_language(self) -> str:
         return self._target_language_value
 
-    def set_target_language(self, lang: str):
+    def set_target_language(self, lang: str) -> None:
         self._target_language_value = lang
 
-    def translate(self, text: str, **kwargs) -> str:
+    def translate(self, text: str, source: str = "en", target: str = "ru") -> str:
         lang = self._target_language_value
         payload = {
             "model": self._model,
@@ -50,11 +50,13 @@ class OllamaTranslateTranslator(AbstractTranslator):
         try:
             with urllib.request.urlopen(req, timeout=self._timeout) as resp:
                 result = json.loads(resp.read().decode("utf-8"))
-                return result.get("message", {}).get("content", "").strip()
+                content = result.get("message", {}).get("content", "")
+                assert isinstance(content, str)
+                return content.strip()
         except urllib.error.URLError as e:
-            return f"[Ollama error: {e.reason}]"
+            raise RuntimeError(f"Ollama connection failed: {e.reason}") from e
         except Exception as e:
-            return f"[Ollama error: {e}]"
+            raise RuntimeError(f"Ollama error: {e}") from e
 
     @staticmethod
     def list_models(url: str = "http://localhost:11434") -> list[str]:

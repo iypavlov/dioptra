@@ -1,3 +1,5 @@
+from typing import Any
+
 import mss
 from PIL import Image
 from PyQt6.QtCore import QRectF, Qt, pyqtSignal
@@ -13,7 +15,7 @@ class RegionSelector(QWidget):
     region_captured = pyqtSignal(object, int, int)
     selection_cancelled = pyqtSignal()
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(None)
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint
@@ -33,8 +35,8 @@ class RegionSelector(QWidget):
         self._active = False
 
     def start_selection(self, x: int, y: int) -> None:
-        self._x1 = self._x2 = x if x else 0
-        self._y1 = self._y2 = y if y else 0
+        self._x1 = self._x2 = x
+        self._y1 = self._y2 = y
         self._active = True
         self.showFullScreen()
         self.raise_()
@@ -71,7 +73,7 @@ class RegionSelector(QWidget):
         self.hide()
         self.selection_cancelled.emit()
 
-    def _reset(self):
+    def _reset(self) -> None:
         self._x1 = self._y1 = self._x2 = self._y2 = 0
         self.update()
 
@@ -79,12 +81,12 @@ class RegionSelector(QWidget):
     def is_selecting(self) -> bool:
         return self._active
 
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event: Any) -> None:
         if event.key() == Qt.Key.Key_Escape:
             self.cancel()
         super().keyPressEvent(event)
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: Any) -> None:
         if self._x2 and self._y2 and (self._x1 != self._x2 or self._y1 != self._y2):
             painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)

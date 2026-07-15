@@ -1,6 +1,8 @@
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from dioptra.translation.ollama_translate import OllamaTranslateTranslator
 
 
@@ -35,8 +37,8 @@ def test_translate_success() -> None:
 def test_translate_network_error() -> None:
     with patch("urllib.request.urlopen", side_effect=Exception("Connection refused")):
         t = OllamaTranslateTranslator()
-        result = t.translate("hello")
-        assert result.startswith("[Ollama error:")
+        with pytest.raises(RuntimeError, match="Ollama"):
+            t.translate("hello")
 
 
 def test_list_models_success() -> None:

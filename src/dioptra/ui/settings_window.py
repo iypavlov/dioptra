@@ -1,4 +1,6 @@
-from PyQt6.QtCore import Qt
+from typing import Any
+
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -37,13 +39,13 @@ LANGUAGES = {
 
 
 class SettingsWindow(QDialog):
-    def __init__(self, settings: SettingsManager, parent=None):
+    def __init__(self, settings: SettingsManager, parent: Any = None) -> None:
         super().__init__(parent)
         self._settings = settings
         self._setup_ui()
         self._load_current()
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.setWindowTitle("Settings")
         self.setFixedSize(420, 400)
         self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
@@ -118,11 +120,11 @@ class SettingsWindow(QDialog):
 
         self.setLayout(layout)
 
-    def showEvent(self, event):
+    def showEvent(self, event: Any) -> None:
         super().showEvent(event)
-        self._center_on_screen()
+        QTimer.singleShot(0, self._center_on_screen)
 
-    def _center_on_screen(self):
+    def _center_on_screen(self) -> None:
         screen = self.screen()
         if screen:
             sg = screen.availableGeometry()
@@ -130,13 +132,13 @@ class SettingsWindow(QDialog):
             y = sg.y() + (sg.height() - self.height()) // 2
             self.move(x, y)
 
-    def _on_provider_changed(self, index: int):
+    def _on_provider_changed(self, index: int) -> None:
         is_ollama = self._provider_combo.itemData(index) == "ollama"
         self._ollama_group.setVisible(is_ollama)
         if is_ollama:
             self._refresh_ollama_models()
 
-    def _refresh_ollama_models(self):
+    def _refresh_ollama_models(self) -> None:
         url = self._ollama_url_input.text().strip() or "http://localhost:11434"
         log.debug("Refreshing Ollama models from %s", url)
         models = OllamaTranslateTranslator.list_models(url)
@@ -155,7 +157,7 @@ class SettingsWindow(QDialog):
             else:
                 self._ollama_model_combo.setEditText(current)
 
-    def _load_current(self):
+    def _load_current(self) -> None:
         idx = self._lang_combo.findData(self._settings.target_language)
         if idx >= 0:
             self._lang_combo.setCurrentIndex(idx)
@@ -168,7 +170,7 @@ class SettingsWindow(QDialog):
         self._on_provider_changed(self._provider_combo.currentIndex())
         self._modifier_input.setText(self._settings.selection_modifier)
 
-    def _save(self):
+    def _save(self) -> None:
         log.info("Saving settings")
         self._settings.translator = self._provider_combo.currentData()
         self._settings.target_language = self._lang_combo.currentData()

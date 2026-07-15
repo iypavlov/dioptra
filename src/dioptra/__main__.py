@@ -1,6 +1,9 @@
 import os
 import sys
 import threading
+from typing import Any
+
+from PIL import Image
 
 os.environ["QT_LOGGING_RULES"] = "qt.qpa.window=false"
 
@@ -11,11 +14,10 @@ from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon, QWidget
 
 from dioptra.app_paths import asset_path
-from dioptra.cache import TranslationCache
 from dioptra.log import get_logger, setup_logger
 from dioptra.ocr_service import OcrService
 from dioptra.settings import SettingsManager
-from dioptra.translation.base import TranslatorFactory
+from dioptra.translation.base import AbstractTranslator, TranslatorFactory
 from dioptra.translation.google_translate import GoogleTranslateTranslator
 from dioptra.translation.ollama_translate import OllamaTranslateTranslator
 from dioptra.translation_worker import TranslationWorker
@@ -31,7 +33,7 @@ class ScreenTranslatorApp(QObject):
     region_move = pyqtSignal(int, int)
     region_end = pyqtSignal(int, int)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._app = QApplication(sys.argv)
         self._app.setQuitOnLastWindowClosed(False)
@@ -54,7 +56,6 @@ class ScreenTranslatorApp(QObject):
         self._translator = self._create_translator()
         self._ocr_service = OcrService()
         threading.Thread(target=self._ocr_service._ensure_ocr, daemon=True).start()
-        self._cache = TranslationCache()
         self._modal = ModalOverlay()
         provider_name = {"ollama": "Ollama", "google": "Google Translate"}.get(
             self._settings.translator, self._settings.translator
@@ -66,7 +67,7 @@ class ScreenTranslatorApp(QObject):
         self._region_selector.selection_cancelled.connect(self._on_selection_cancelled)
 
         self._thread = QThread()
-        self._worker = TranslationWorker(self._ocr_service, self._translator, self._cache)
+        self._worker = TranslationWorker(self._ocr_service, self._translator)
         self._worker.moveToThread(self._thread)
         self._worker.ocr_result.connect(self._on_worker_ocr)
         self._worker.translation_result.connect(self._on_worker_translation)
@@ -76,9 +77,9 @@ class ScreenTranslatorApp(QObject):
         self._thread.start()
 
         self._modifier_pressed = False
-        self._mouse_hook = None
+        self._mouse_hook: Any = None
         self._request_seq = 0
-        self._crosshair = None
+        self._crosshair: QWidget | None = None
 
         self._combo_timer = QTimer()
         self._combo_timer.timeout.connect(self._poll_combo)
@@ -87,10 +88,10 @@ class ScreenTranslatorApp(QObject):
         self._settings_window = None
         self._setup_tray()
 
-    def _on_modifier_changed(self, modifier: str):
+    def _on_modifier_changed(self, modifier: str) -> None:
         pass
 
-    def _show_crosshair(self):
+    def _show_crosshair(self) -> None:
         if self._crosshair is None:
             self._crosshair = QWidget()
             self._crosshair.setWindowFlags(
@@ -106,11 +107,11 @@ class ScreenTranslatorApp(QObject):
         self._crosshair.showFullScreen()
         self._crosshair.raise_()
 
-    def _hide_crosshair(self):
+    def _hide_crosshair(self) -> None:
         if self._crosshair is not None:
             self._crosshair.hide()
 
-    def _poll_combo(self):
+    def _poll_combo(self) -> None:
         if self._modal.isVisible():
             if self._mouse_hook:
                 self._unhook_mouse()
@@ -135,15 +136,15 @@ class ScreenTranslatorApp(QObject):
                 self._region_selector.end_selection(x, y)
             self._unhook_mouse()
 
-    def _unhook_mouse(self):
+    def _unhook_mouse(self) -> None:
         if self._mouse_hook:
             try:
                 mouse.unhook(self._mouse_hook)
             except Exception:
                 pass
-            self._mouse_hook = None
+        self._mouse_hook = None
 
-    def _on_mouse_event(self, event):
+    def _on_mouse_event(self, event: Any) -> None:
         if isinstance(event, mouse.ButtonEvent) and event.button == 'left':
             x, y = mouse.get_position()
             if event.event_type == 'down':
@@ -153,22 +154,22 @@ class ScreenTranslatorApp(QObject):
         elif isinstance(event, mouse.MoveEvent) and self._region_selector.is_selecting:
             self.region_move.emit(event.x, event.y)
 
-    def _on_region_start(self, x: int, y: int):
+    def _on_region_start(self, x: int, y: int) -> None:
         self._hide_crosshair()
         self._region_selector.start_selection(x, y)
         self._request_seq += 1
         self._worker.cancel()
         self._modal.hide()
 
-    def _on_region_move(self, x: int, y: int):
+    def _on_region_move(self, x: int, y: int) -> None:
         self._region_selector.update_selection(x, y)
 
-    def _on_region_end(self, x: int, y: int):
+    def _on_region_end(self, x: int, y: int) -> None:
         if self._region_selector.is_selecting:
             self._region_selector.end_selection(x, y)
         self._unhook_mouse()
 
-    def _create_translator(self):
+    def _create_translator(self) -> AbstractTranslator:
         provider = self._settings.translator
         try:
             if provider == "ollama":
@@ -183,20 +184,20 @@ class ScreenTranslatorApp(QObject):
         except Exception:
             return TranslatorFactory.create("google")
 
-    def _on_language_changed(self, lang: str):
+    def _on_language_changed(self, lang: str) -> None:
         self._translator.set_target_language(lang)
 
-    def _on_translator_changed(self, provider: str):
+    def _on_translator_changed(self, provider: str) -> None:
         self._translator = self._create_translator()
         self._translator.set_target_language(self._settings.target_language)
         provider_name = {"ollama": "Ollama", "google": "Google Translate"}.get(provider, provider)
         self._modal.set_provider(provider_name)
 
-    def _on_ollama_settings_changed(self, url: str, model: str, timeout: int):
+    def _on_ollama_settings_changed(self, url: str, model: str, timeout: int) -> None:
         if self._settings.translator == "ollama":
             self._translator = self._create_translator()
 
-    def _setup_tray(self):
+    def _setup_tray(self) -> None:
         icon_path = asset_path("icon.png")
         icon = QIcon(str(icon_path)) if icon_path.is_file() else QIcon()
         self._app.setWindowIcon(icon)
@@ -218,46 +219,46 @@ class ScreenTranslatorApp(QObject):
         self._tray_icon.setContextMenu(self._tray_menu)
         self._tray_icon.show()
 
-    def _open_settings(self):
+    def _open_settings(self) -> None:
         try:
             w = SettingsWindow(self._settings)
             w.exec()
         except Exception as e:
             log.error("Settings error: %s", e, exc_info=True)
 
-    def _on_region_captured(self, image: object, cx: int, cy: int):
+    def _on_region_captured(self, image: Image.Image, cx: int, cy: int) -> None:
         self._worker.cancel()
         self._last_cx = cx
         self._last_cy = cy
         self._modal.show_loading(cx, cy)
         self._worker.request_process.emit(image, cx, cy, self._request_seq)
 
-    def _on_worker_ocr(self, text: str, request_seq: int):
+    def _on_worker_ocr(self, text: str, request_seq: int) -> None:
         if request_seq != self._request_seq:
             return
         self._modal.show_ocr_progress(text, self._last_cx, self._last_cy)
 
-    def _on_worker_translation(self, word: str, translation: str, request_seq: int):
+    def _on_worker_translation(self, word: str, translation: str, request_seq: int) -> None:
         if request_seq != self._request_seq:
             return
         log.info("Translation: '%s' -> '%s' (seq=%d)", word[:40], translation[:80], request_seq)
         self._modal.show_translation(word, translation, self._last_cx, self._last_cy)
 
-    def _on_selection_cancelled(self):
+    def _on_selection_cancelled(self) -> None:
         self._modal.hide()
 
-    def _on_worker_no_text(self, request_seq: int):
+    def _on_worker_no_text(self, request_seq: int) -> None:
         if request_seq != self._request_seq:
             return
         self._modal.hide()
 
-    def _on_worker_error(self, message: str, request_seq: int):
+    def _on_worker_error(self, message: str, request_seq: int) -> None:
         if request_seq != self._request_seq:
             return
         log.warning("Worker error: %s (seq=%d)", message, request_seq)
         self._modal.show_message(message, self._last_cx, self._last_cy)
 
-    def _quit(self):
+    def _quit(self) -> None:
         log.info("Shutting down Dioptra")
         self._worker.cancel()
         self._thread.quit()
@@ -265,7 +266,7 @@ class ScreenTranslatorApp(QObject):
         self._unhook_mouse()
         self._app.quit()
 
-    def run(self):
+    def run(self) -> None:
         sys.exit(self._app.exec())
 
 

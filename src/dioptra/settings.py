@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
 
@@ -7,7 +9,7 @@ from dioptra.log import get_logger
 
 log = get_logger("dioptra.settings")
 
-DEFAULT_SETTINGS = {
+DEFAULT_SETTINGS: dict[str, str | bool | int] = {
     "target_language": "ru",
     "adaptivity_enabled": True,
     "translator": "ollama",
@@ -24,33 +26,36 @@ class SettingsManager(QObject):
     ollama_settings_changed = pyqtSignal(str, str, int)
     modifier_changed = pyqtSignal(str)
 
-    def __init__(self, config_dir: Path | None = None):
+    def __init__(self, config_dir: Path | None = None) -> None:
         super().__init__()
         self._config_dir = config_dir or Path.home() / ".screen-translator"
         self._file = self._config_dir / "settings.json"
-        self._data = dict(DEFAULT_SETTINGS)
+        self._data: dict[str, str | bool | int] = dict(DEFAULT_SETTINGS)
         self._load()
 
-    def _load(self):
+    def _load(self) -> None:
         if self._file.exists():
             try:
                 with open(self._file, encoding="utf-8") as f:
-                    self._data = {**DEFAULT_SETTINGS, **json.load(f)}
+                    loaded = json.load(f)
+                    self._data = {**DEFAULT_SETTINGS, **loaded}
             except Exception as e:
                 log.warning("Failed to load settings: %s, using defaults", e)
                 self._data = dict(DEFAULT_SETTINGS)
 
-    def _save(self):
+    def _save(self) -> None:
         self._config_dir.mkdir(parents=True, exist_ok=True)
         with open(self._file, "w", encoding="utf-8") as f:
             json.dump(self._data, f, indent=2, ensure_ascii=False)
 
     @property
     def target_language(self) -> str:
-        return self._data.get("target_language", "ru")
+        val = self._data.get("target_language", "ru")
+        assert isinstance(val, str)
+        return val
 
     @target_language.setter
-    def target_language(self, value: str):
+    def target_language(self, value: str) -> None:
         if value != self._data.get("target_language"):
             log.info("Setting target language: %s", value)
             self._data["target_language"] = value
@@ -59,19 +64,23 @@ class SettingsManager(QObject):
 
     @property
     def adaptivity_enabled(self) -> bool:
-        return self._data.get("adaptivity_enabled", True)
+        val = self._data.get("adaptivity_enabled", True)
+        assert isinstance(val, bool)
+        return val
 
     @adaptivity_enabled.setter
-    def adaptivity_enabled(self, value: bool):
+    def adaptivity_enabled(self, value: bool) -> None:
         self._data["adaptivity_enabled"] = value
         self._save()
 
     @property
     def translator(self) -> str:
-        return self._data.get("translator", "ollama")
+        val = self._data.get("translator", "ollama")
+        assert isinstance(val, str)
+        return val
 
     @translator.setter
-    def translator(self, value: str):
+    def translator(self, value: str) -> None:
         if value != self._data.get("translator"):
             log.info("Switching translator: %s", value)
             self._data["translator"] = value
@@ -80,10 +89,12 @@ class SettingsManager(QObject):
 
     @property
     def selection_modifier(self) -> str:
-        return self._data.get("selection_modifier", "ctrl")
+        val = self._data.get("selection_modifier", "ctrl")
+        assert isinstance(val, str)
+        return val
 
     @selection_modifier.setter
-    def selection_modifier(self, value: str):
+    def selection_modifier(self, value: str) -> None:
         if value != self._data.get("selection_modifier"):
             self._data["selection_modifier"] = value
             self._save()
@@ -91,10 +102,12 @@ class SettingsManager(QObject):
 
     @property
     def ollama_url(self) -> str:
-        return self._data.get("ollama_url", "http://localhost:11434")
+        val = self._data.get("ollama_url", "http://localhost:11434")
+        assert isinstance(val, str)
+        return val
 
     @ollama_url.setter
-    def ollama_url(self, value: str):
+    def ollama_url(self, value: str) -> None:
         value = value.rstrip("/")
         if value != self._data.get("ollama_url"):
             self._data["ollama_url"] = value
@@ -103,10 +116,12 @@ class SettingsManager(QObject):
 
     @property
     def ollama_model(self) -> str:
-        return self._data.get("ollama_model", "llama3.2")
+        val = self._data.get("ollama_model", "llama3.2")
+        assert isinstance(val, str)
+        return val
 
     @ollama_model.setter
-    def ollama_model(self, value: str):
+    def ollama_model(self, value: str) -> None:
         if value != self._data.get("ollama_model"):
             self._data["ollama_model"] = value
             self._save()
@@ -114,16 +129,18 @@ class SettingsManager(QObject):
 
     @property
     def ollama_timeout(self) -> int:
-        return self._data.get("ollama_timeout", 10)
+        val = self._data.get("ollama_timeout", 10)
+        assert isinstance(val, int)
+        return val
 
     @ollama_timeout.setter
-    def ollama_timeout(self, value: int):
+    def ollama_timeout(self, value: int) -> None:
         if value != self._data.get("ollama_timeout"):
             self._data["ollama_timeout"] = value
             self._save()
             self._emit_ollama_changed()
 
-    def _emit_ollama_changed(self):
+    def _emit_ollama_changed(self) -> None:
         self.ollama_settings_changed.emit(
             self.ollama_url, self.ollama_model, self.ollama_timeout
         )
