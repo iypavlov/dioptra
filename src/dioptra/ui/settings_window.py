@@ -35,11 +35,6 @@ class SettingsWindow(QDialog):
         layout = QVBoxLayout()
         layout.setSpacing(12)
 
-        lang_label = QLabel("EN → RU")
-        lang_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lang_label.setStyleSheet("color: #e8eaf0; background: #1a1b23; padding: 8px; border-radius: 6px;")
-        layout.addWidget(lang_label)
-
         provider_layout = QHBoxLayout()
         provider_layout.addWidget(QLabel("Translator:"))
         self._provider_combo = QComboBox()
@@ -86,6 +81,15 @@ class SettingsWindow(QDialog):
         layout.addLayout(mod_layout)
 
         layout.addStretch()
+
+        gh_layout = QHBoxLayout()
+        gh_label = QLabel(
+            '<a href="https://github.com/iypavlov/dioptra" style="color: #8b8fa3; text-decoration: none;">GitHub</a>'
+        )
+        gh_label.setOpenExternalLinks(True)
+        gh_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        gh_layout.addWidget(gh_label)
+        layout.addLayout(gh_layout)
 
         btn_layout = QHBoxLayout()
         save_btn = QPushButton("Save")
