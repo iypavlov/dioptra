@@ -42,19 +42,24 @@ def main() -> None:
     if result.returncode != 0:
         sys.exit(result.returncode)
 
+    # Remove the outer launcher EXE, keep only the directory version
+    outer_exe = PROJECT_ROOT / "dist" / "Dioptra.exe"
+    if outer_exe.exists():
+        outer_exe.unlink()
+        print("Removed outer Dioptra.exe (keeping only dist/Dioptra/Dioptra.exe)")
+
     # Quick smoke test: run the EXE briefly to check for import errors
-    exe = PROJECT_ROOT / "dist" / "Dioptra.exe"
-    if exe.exists():
-        print(f"\nSmoke-testing {exe} ...")
+    dir_exe = PROJECT_ROOT / "dist" / "Dioptra" / "Dioptra.exe"
+    if dir_exe.exists():
+        print(f"\nSmoke-testing {dir_exe} ...")
         proc = subprocess.Popen(
-            [str(exe)],
+            [str(dir_exe)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=PROJECT_ROOT,
         )
         try:
             proc.wait(timeout=5)
-            # If it exited within 5 seconds, something went wrong
             err = proc.stderr.read().decode("utf-8", errors="replace")
             if err:
                 print("STDERR:", err[:2000])
