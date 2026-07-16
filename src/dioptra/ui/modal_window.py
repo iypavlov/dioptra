@@ -9,6 +9,8 @@ from PyQt6.QtWidgets import QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidg
 
 
 
+
+
 class _MouseBridge(QObject):
     clicked = pyqtSignal()
 
@@ -62,6 +64,8 @@ class ModalOverlay(QWidget):
         self._loading_active = False
         self._fade_anim: QPropertyAnimation | None = None
         self._provider_name: str = ""
+        self._source_lang: str = ""
+        self._target_lang: str = ""
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -170,11 +174,15 @@ class ModalOverlay(QWidget):
         # --- footer ---
         footer = QHBoxLayout()
         footer.setContentsMargins(24, 6, 24, 12)
+        self._lang_label = QLabel()
+        self._lang_label.setFont(QFont("Segoe UI", 8))
+        self._lang_label.setStyleSheet("color: #505568; background: transparent;")
+        footer.addWidget(self._lang_label)
+        footer.addStretch()
         self._provider_label = QLabel()
         self._provider_label.setFont(QFont("Segoe UI", 8))
         self._provider_label.setStyleSheet("color: #505568; background: transparent;")
         footer.addWidget(self._provider_label)
-        footer.addStretch()
         bg.addLayout(footer)
 
         self._scroll.setWidget(self._bg)
@@ -193,6 +201,7 @@ class ModalOverlay(QWidget):
         self._auto_hide_timer.stop()
         self._source_label.setText("...")
         self._translation_label.clear()
+        self._lang_label.clear()
         self._start_loading_animation()
         self._provider_label.setText(self._provider_name)
         self._position_and_show(cursor_x, cursor_y)
@@ -201,14 +210,16 @@ class ModalOverlay(QWidget):
         self._auto_hide_timer.stop()
         self._source_label.setText(word)
         self._translation_label.clear()
+        self._lang_label.clear()
         self._start_loading_animation()
         self._position_and_show(cursor_x, cursor_y)
 
-    def show_translation(self, word: str, translation: str, cursor_x: int, cursor_y: int) -> None:
+    def show_translation(self, word: str, translation: str, cursor_x: int, cursor_y: int, source_lang: str = "", target_lang: str = "") -> None:
         self._stop_loading_animation()
         self._auto_hide_timer.stop()
         self._source_label.setText(word)
         self._translation_label.setText(translation)
+        self._lang_label.setText("EN → RU")
         self._provider_label.setText(self._provider_name)
         self._position_and_show(cursor_x, cursor_y)
 
@@ -217,6 +228,7 @@ class ModalOverlay(QWidget):
         self._auto_hide_timer.stop()
         self._source_label.setText("")
         self._translation_label.setText(message)
+        self._lang_label.clear()
         self._provider_label.setText(self._provider_name)
         self._position_and_show(cursor_x, cursor_y)
         self._auto_hide_timer.start(2500)
@@ -344,6 +356,7 @@ class ModalOverlay(QWidget):
         self._stop_mouse_hook()
         self._source_label.clear()
         self._translation_label.clear()
+        self._lang_label.clear()
         self._provider_label.clear()
         super().hideEvent(event)
 

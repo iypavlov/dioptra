@@ -10,10 +10,10 @@ log = get_logger("dioptra.worker")
 
 class TranslationWorker(QObject):
     ocr_result = pyqtSignal(str, int)
-    translation_result = pyqtSignal(str, str, int)
+    translation_result = pyqtSignal(str, str, str, int)
     error_occurred = pyqtSignal(str, int)
     no_text_found = pyqtSignal(int)
-    request_process = pyqtSignal(object, int, int, int)
+    request_process = pyqtSignal(object, int, int, int, str)
 
     def __init__(self, ocr_service: OcrService, translator: AbstractTranslator) -> None:
         super().__init__()
@@ -25,7 +25,7 @@ class TranslationWorker(QObject):
     def cancel(self) -> None:
         self._cancelled = True
 
-    def _on_process(self, image: Image.Image, cx: int, cy: int, request_seq: int) -> None:
+    def _on_process(self, image: Image.Image, cx: int, cy: int, request_seq: int, source_lang: str = "en") -> None:
         self._cancelled = False
         try:
             words = self._ocr.recognize(image)
@@ -43,11 +43,11 @@ class TranslationWorker(QObject):
 
             self.ocr_result.emit(text, request_seq)
 
-            translation = self._translator.translate(text)
+            translation = self._translator.translate(text, source=source_lang)
             if self._cancelled:
                 return
 
-            self.translation_result.emit(text, translation, request_seq)
+            self.translation_result.emit(text, translation, source_lang, request_seq)
 
         except Exception as e:
             log.error("Worker error (seq=%d): %s", request_seq, e, exc_info=True)

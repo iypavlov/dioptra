@@ -5,7 +5,7 @@ import urllib.request
 from .base import AbstractTranslator
 
 SYSTEM_PROMPT_TEMPLATE = (
-    "You are a professional translator. Translate the following text to {target}.\n"
+    "You are a professional translator. Translate the following text from {source} to {target}.\n"
     "Rules:\n"
     "- Return ONLY the translated text, no explanations, no notes\n"
     "- Preserve the original meaning, tone, and style\n"
@@ -30,11 +30,11 @@ class OllamaTranslateTranslator(AbstractTranslator):
         self._target_language_value = lang
 
     def translate(self, text: str, source: str = "en", target: str = "ru") -> str:
-        lang = self._target_language_value
+        target_lang = target if target != "ru" else self._target_language_value
         payload = {
             "model": self._model,
             "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT_TEMPLATE.format(target=lang)},
+                {"role": "system", "content": SYSTEM_PROMPT_TEMPLATE.format(source=source, target=target_lang)},
                 {"role": "user", "content": text},
             ],
             "stream": False,

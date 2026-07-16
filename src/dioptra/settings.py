@@ -10,6 +10,7 @@ from dioptra.log import get_logger
 log = get_logger("dioptra.settings")
 
 DEFAULT_SETTINGS: dict[str, str | bool | int] = {
+    "source_language": "en",
     "target_language": "ru",
     "translator": "ollama",
     "selection_modifier": "ctrl",
@@ -60,6 +61,10 @@ class SettingsManager(QObject):
             self._data["target_language"] = value
             self._save()
             self.language_changed.emit(value)
+
+    @property
+    def source_language(self) -> str:
+        return "en"
 
     @property
     def translator(self) -> str:

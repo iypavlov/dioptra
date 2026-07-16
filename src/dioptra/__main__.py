@@ -225,18 +225,18 @@ class ScreenTranslatorApp(QObject):
         self._last_cx = cx
         self._last_cy = cy
         self._modal.show_loading(cx, cy)
-        self._worker.request_process.emit(image, cx, cy, self._request_seq)
+        self._worker.request_process.emit(image, cx, cy, self._request_seq, "en")
 
     def _on_worker_ocr(self, text: str, request_seq: int) -> None:
         if request_seq != self._request_seq:
             return
         self._modal.show_ocr_progress(text, self._last_cx, self._last_cy)
 
-    def _on_worker_translation(self, word: str, translation: str, request_seq: int) -> None:
+    def _on_worker_translation(self, word: str, translation: str, source_lang: str, request_seq: int) -> None:
         if request_seq != self._request_seq:
             return
-        log.info("Translation: '%s' -> '%s' (seq=%d)", word[:40], translation[:80], request_seq)
-        self._modal.show_translation(word, translation, self._last_cx, self._last_cy)
+        log.info("Translation: '%s' -> '%s' (lang=%s, seq=%d)", word[:40], translation[:80], source_lang, request_seq)
+        self._modal.show_translation(word, translation, self._last_cx, self._last_cy, source_lang, "ru")
 
     def _on_selection_cancelled(self) -> None:
         self._modal.hide()

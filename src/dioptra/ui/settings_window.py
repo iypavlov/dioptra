@@ -19,24 +19,6 @@ from dioptra.translation.ollama_translate import OllamaTranslateTranslator
 
 log = get_logger("dioptra.ui.settings")
 
-LANGUAGES = {
-    "ru": "Russian",
-    "de": "German",
-    "fr": "French",
-    "es": "Spanish",
-    "it": "Italian",
-    "pt": "Portuguese",
-    "zh": "Chinese",
-    "ja": "Japanese",
-    "ar": "Arabic",
-    "ko": "Korean",
-    "pl": "Polish",
-    "nl": "Dutch",
-    "tr": "Turkish",
-    "cs": "Czech",
-    "sv": "Swedish",
-}
-
 
 class SettingsWindow(QDialog):
     def __init__(self, settings: SettingsManager, parent: Any = None) -> None:
@@ -53,13 +35,10 @@ class SettingsWindow(QDialog):
         layout = QVBoxLayout()
         layout.setSpacing(12)
 
-        lang_layout = QHBoxLayout()
-        lang_layout.addWidget(QLabel("Target language:"))
-        self._lang_combo = QComboBox()
-        for code, name in LANGUAGES.items():
-            self._lang_combo.addItem(f"{name} ({code})", code)
-        lang_layout.addWidget(self._lang_combo)
-        layout.addLayout(lang_layout)
+        lang_label = QLabel("EN → RU")
+        lang_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lang_label.setStyleSheet("color: #e8eaf0; background: #1a1b23; padding: 8px; border-radius: 6px;")
+        layout.addWidget(lang_label)
 
         provider_layout = QHBoxLayout()
         provider_layout.addWidget(QLabel("Translator:"))
@@ -158,9 +137,6 @@ class SettingsWindow(QDialog):
                 self._ollama_model_combo.setEditText(current)
 
     def _load_current(self) -> None:
-        idx = self._lang_combo.findData(self._settings.target_language)
-        if idx >= 0:
-            self._lang_combo.setCurrentIndex(idx)
         pidx = self._provider_combo.findData(self._settings.translator)
         if pidx >= 0:
             self._provider_combo.setCurrentIndex(pidx)
@@ -173,7 +149,6 @@ class SettingsWindow(QDialog):
     def _save(self) -> None:
         log.info("Saving settings")
         self._settings.translator = self._provider_combo.currentData()
-        self._settings.target_language = self._lang_combo.currentData()
         self._settings.ollama_url = self._ollama_url_input.text().strip()
         self._settings.ollama_model = self._ollama_model_combo.currentText().strip()
         self._settings.ollama_timeout = self._ollama_timeout_spin.value()
