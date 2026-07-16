@@ -29,6 +29,4 @@ class TranslatorFactory:
             raise ValueError(f"Unknown translator: {name}. Available: {list(cls._registry.keys())}")
         return cls._registry[name](**kwargs)
 
-    @classmethod
-    def unregister(cls, name: str) -> None:
-        cls._registry.pop(name, None)
+

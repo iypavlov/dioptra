@@ -11,7 +11,6 @@ log = get_logger("dioptra.settings")
 
 DEFAULT_SETTINGS: dict[str, str | bool | int] = {
     "target_language": "ru",
-    "adaptivity_enabled": True,
     "translator": "ollama",
     "selection_modifier": "ctrl",
     "ollama_url": "http://localhost:11434",
@@ -61,17 +60,6 @@ class SettingsManager(QObject):
             self._data["target_language"] = value
             self._save()
             self.language_changed.emit(value)
-
-    @property
-    def adaptivity_enabled(self) -> bool:
-        val = self._data.get("adaptivity_enabled", True)
-        assert isinstance(val, bool)
-        return val
-
-    @adaptivity_enabled.setter
-    def adaptivity_enabled(self, value: bool) -> None:
-        self._data["adaptivity_enabled"] = value
-        self._save()
 
     @property
     def translator(self) -> str:

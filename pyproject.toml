@@ -1,68 +1,15 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "dioptra"
 version = "0.1.0"
 description = "Screen translator with OCR support"
 requires-python = ">=3.11"
-license = { text = "MIT" }
-authors = [
-    { name = "Dioptra Contributors" },
-]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Environment :: Win32 (MS Windows)",
-    "Intended Audience :: End Users/Desktop",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-]
-
-dependencies = [
-    "paddleocr>=2.8.0,<3.0",
-    "paddlepaddle>=2.6.0,<3.0",
-    "mss>=9.0.0",
-    "PyQt6>=6.7.0",
-    "keyboard>=0.13.5",
-    "deep-translator>=1.11.4",
-    "Pillow>=10.0.0",
-    "mouse>=0.7.1",
-]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "ruff>=0.5.0",
-    "mypy>=1.10.0",
 ]
-
-[project.scripts]
-dioptra = "dioptra.__main__:main"
-
-[tool.ruff]
-line-length = 100
-target-version = "py312"
-
-[tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "I",   # isort
-    "N",   # naming
-    "W",   # pycodestyle warnings
-    "UP",  # pyupgrade
-    "B",   # bugbear
-]
-
-[tool.ruff.format]
-quote-style = "double"
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
-ignore_missing_imports = true
-files = ["src/dioptra"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-
-[tool.setuptools.packages.find]
-where = ["src"]

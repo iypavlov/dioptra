@@ -42,7 +42,6 @@ class ScreenTranslatorApp(QObject):
         self._settings.language_changed.connect(self._on_language_changed)
         self._settings.translator_changed.connect(self._on_translator_changed)
         self._settings.ollama_settings_changed.connect(self._on_ollama_settings_changed)
-        self._settings.modifier_changed.connect(self._on_modifier_changed)
 
         log.info("Starting Dioptra translator=%s lang=%s",
                   self._settings.translator, self._settings.target_language)
@@ -87,9 +86,6 @@ class ScreenTranslatorApp(QObject):
 
         self._settings_window = None
         self._setup_tray()
-
-    def _on_modifier_changed(self, modifier: str) -> None:
-        pass
 
     def _show_crosshair(self) -> None:
         if self._crosshair is None:

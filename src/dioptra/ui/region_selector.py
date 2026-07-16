@@ -6,9 +6,7 @@ from PyQt6.QtCore import QRectF, Qt, pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QPainter, QPen
 from PyQt6.QtWidgets import QApplication, QWidget
 
-from dioptra.log import get_logger
 
-log = get_logger("dioptra.ui.selector")
 
 
 class RegionSelector(QWidget):

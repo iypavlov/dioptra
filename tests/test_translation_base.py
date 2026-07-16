@@ -23,14 +23,12 @@ def test_register_and_create() -> None:
     TranslatorFactory.register("fake", FakeTranslator)
     instance = TranslatorFactory.create("fake")
     assert isinstance(instance, FakeTranslator)
-    TranslatorFactory.unregister("fake")
 
 
 def test_create_with_kwargs() -> None:
     TranslatorFactory.register("fake_kwargs", FakeTranslator)
     instance = TranslatorFactory.create("fake_kwargs", extra="value")
     assert isinstance(instance, FakeTranslator)
-    TranslatorFactory.unregister("fake_kwargs")
 
 
 def test_unknown_translator() -> None:

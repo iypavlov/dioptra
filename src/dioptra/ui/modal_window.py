@@ -6,9 +6,7 @@ from PyQt6.QtCore import QObject, QPropertyAnimation, Qt, QTimer, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QScrollArea, QVBoxLayout, QWidget
 
-from dioptra.log import get_logger
 
-log = get_logger("dioptra.ui.modal")
 
 
 class _MouseBridge(QObject):
