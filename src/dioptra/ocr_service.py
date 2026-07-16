@@ -2,7 +2,7 @@ import threading
 from typing import Any
 
 import numpy as np
-from paddleocr import PaddleOCR
+from rapidocr import RapidOCR
 from PIL import Image, ImageEnhance, ImageFilter
 
 from dioptra.log import get_logger
@@ -13,7 +13,7 @@ log = get_logger("dioptra.ocr")
 class OcrService:
     def __init__(self, lang: str = "en") -> None:
         self._lang = lang
-        self._ocr: PaddleOCR | None = None
+        self._ocr: RapidOCR | None = None
         self._lock = threading.Lock()
 
     def set_lang(self, lang: str) -> None:
@@ -23,13 +23,13 @@ class OcrService:
                 self._lang = lang
                 self._ocr = None
 
-    def _ensure_ocr(self) -> PaddleOCR:
+    def _ensure_ocr(self) -> RapidOCR:
         if self._ocr is None:
             with self._lock:
                 if self._ocr is None:
-                    log.info("Initializing PaddleOCR (lang=%s)", self._lang)
-                    self._ocr = PaddleOCR(use_angle_cls=False, lang=self._lang)
-                    log.info("PaddleOCR initialized")
+                    log.info("Initializing RapidOCR (lang=%s)", self._lang)
+                    self._ocr = RapidOCR(params={"Global.use_cls": False})
+                    log.info("RapidOCR initialized")
         return self._ocr
 
     def recognize(self, image: Image.Image) -> list[dict[str, Any]]:
@@ -45,15 +45,15 @@ class OcrService:
 
         img_array = np.array(img)
         ocr = self._ensure_ocr()
-        result = ocr.ocr(img_array, cls=False)
+        result = ocr(img_array)
         words = []
-        if result and result[0]:
-            for line in result[0]:
-                box, (text, confidence) = line
+        if result.txts:
+            for i in range(len(result.txts)):
+                box = result.boxes[i]
                 words.append({
-                    "text": text,
+                    "text": result.txts[i],
                     "box": [[int(coord[0] / 2), int(coord[1] / 2)] for coord in box],
-                    "confidence": confidence,
+                    "confidence": float(result.scores[i]),
                 })
         log.debug("OCR recognized %d words in %dx%d image", len(words), w, h)
         return words

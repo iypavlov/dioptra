@@ -7,9 +7,25 @@ name = "dioptra"
 version = "0.1.0"
 description = "Screen translator with OCR support"
 requires-python = ">=3.11"
+dependencies = [
+    "rapidocr>=3.9.0",
+    "onnxruntime>=1.20.0",
+    "mss>=9.0.0",
+    "PyQt6>=6.7.0",
+    "keyboard>=0.13.5",
+    "deep-translator>=1.11.4",
+    "Pillow>=10.0.0",
+    "mouse>=0.7.1",
+]
+
+[project.scripts]
+dioptra = "dioptra.__main__:main"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
     "ruff>=0.5.0",
+]
+build = [
+    "pyinstaller>=6.0.0",
 ]
