@@ -48,6 +48,13 @@ def main() -> None:
         outer_exe.unlink()
         print("Removed outer Dioptra.exe (keeping only dist/Dioptra/Dioptra.exe)")
 
+    # Remove unnecessary OpenCV video DLLs (~52 MB, rapidocr only uses still images)
+    internal = PROJECT_ROOT / "dist" / "Dioptra" / "_internal"
+    for dll in internal.rglob("opencv_videoio*"):
+        size = dll.stat().st_size
+        dll.unlink()
+        print(f"Removed {dll.name} ({size / 1_000_000:.0f} MB)")
+
     # Quick smoke test: run the EXE briefly to check for import errors
     dir_exe = PROJECT_ROOT / "dist" / "Dioptra" / "Dioptra.exe"
     if dir_exe.exists():
